@@ -21,9 +21,10 @@ first for the experimental design; this file explains how the code implements it
   Layer 3 (pairwise LLM judge across seven fixed comparisons), and Layer 4 (researcher-vs-judge
   kappa calibration that gates whether Layer 3 counts as a primary signal).
 - **Current state (see "Current status" at the end for the full list):** data layer and all
-  deterministic/statistical modules are done and tested; retrieval (`sources.py`, `index.py`,
-  `hybrid.py`) is in progress; generation (`generate.py`) and the judge call (`judge.py`) are still
-  scaffolded.
+  deterministic/statistical modules are done and tested; retrieval is mostly done — `text_clean.py`,
+  `sources.py` (all four context-type builders) and `index.py` are done and tested, `hybrid.py`
+  (dense+lexical fusion) is the one piece still scaffolded; generation (`generate.py`) and the judge
+  call (`judge.py`) are still scaffolded.
 
 ## Understanding the database and the data structures
 
@@ -41,12 +42,12 @@ touch it directly.
 
 | Table              | Rows   | Key columns                                                              | What it represents |
 |---------------------|-------:|---------------------------------------------------------------------------|---|
-| `issue`             | 5,234  | `issue_id` (PK, e.g. `PIG-692`), `type`, `summary`, `description`, `status`, `resolution`, `created_date`, `resolved_date`, `assignee`, `reporter` | One row per Jira issue. `type` splits as Bug 3056 / Improvement 1074 / Sub-task 591 / New Feature 338 / Task 99 / Test 49 / Wish 27 — sampling filters to `New Feature` + `Improvement` (`sampling.REQUIREMENT_TYPES`). |
+| `issue`             | 5,234  | `issue_id` (PK, e.g. `PIG-692`), `type`, `summary`, `description`, `status`, `resolution`, `created_date`, `resolved_date`, `assignee`, `reporter` | One row per Jira issue. `type` splits as Bug 3056 / Improvement 1074 / Sub-task 591 / New Feature 338 / Task 99 / Test 49 / Wish 27. Both sampling and `past_tickets_chunks` filter to `New Feature` + `Improvement`, `resolution='Fixed'` (not just any `resolved_date`, which would also admit Duplicate/Won't Fix/Invalid), and a description-length floor of 30 chars — this candidate pool is 776 issues, confirmed by profiling the dump (`SeossLoader.issues()` defaults). |
 | `issue_comment`     | 29,896 | `issue_id` (FK), `username`, `created_date`, `message`                    | Discussion thread per issue; `_has_discussion` in `sampling.py` counts these. |
 | `issue_component`   | 2,462  | `issue_id` (FK), `component`                                             | Not currently read by any loader method — available if component-level filtering is ever needed. |
 | `issue_fix_version` | 4,418  | `issue_id` (FK), `fix_version`                                           | Same — unused today, present in the schema. |
-| `issue_link`        | 1,479  | `source_issue_id`, `target_issue_id`, `name`, `outward_label`, `is_containment` | Self-referential many-to-many between issues. `is_containment=1` (591 rows, `name='Part-of'`) marks parent/sub-task relationships, used by `linked_issue_ids(containment_only=True)` for `reference_artefacts`. Other link types (`Reference`, `Duplicate`, `Blocker`, `dependent`, ...) exist but are only read as containment-filtered or unfiltered unions today. |
-| `change_set`        | 3,134  | `commit_hash` (PK, SEOSS's own hash), `committed_date`, `message`, `author_email`, `is_merge` | One row per commit, from SEOSS's git conversion — **not** the same hash space as `data/repos/pig` (see `commit_resolver.py`). |
+| `issue_link`        | 1,479  | `source_issue_id`, `target_issue_id`, `name`, `outward_label`, `is_containment` | Self-referential many-to-many between issues. `is_containment=1` (591 rows, `name='Part-of'`) marks parent/sub-task relationships, used by `linked_issue_ids(containment_only=True)` for `reference_artefacts`. **Metadata boundary (hard rule, see `CLAUDE.md`):** typed/non-containment links here, plus `issue_component` and `issue_fix_version` below, are sampling/analysis-only and must never be read into a retrieval context type or a generation prompt — only the containment-filtered text already used in `reference_artefacts()` is fine, since that's a separate SQ3 comparison target, not a RAG context type. |
+| `change_set`        | 3,134  | `commit_hash` (PK, SEOSS's own hash), `committed_date`, `message`, `author_email`, `is_merge` | One row per commit, from SEOSS's git conversion — **not** the same hash space as `data/repos/pig` (see `commit_resolver.py`). `is_merge` is uniformly 0 in this dump (profiling confirmed it), so no code here filters on it. |
 | `change_set_link`   | 2,980  | `commit_hash` (FK), `issue_id` (FK)                                      | The trace link: which commit(s) resolved which issue. Many-to-many in principle; `commits_for_issue()` joins through this. |
 | `code_change`       | 21,143 | `commit_hash` (FK), `file_path`, `old_file_path`, `change_type`, `is_deleted`, `sum_added_lines`, `sum_removed_lines` | Per-file diff stats for each commit. `files_changed()` reads `file_path` filtered by `is_deleted`. |
 | `meta`              | 4      | `key`, `value`                                                           | Provenance only (crawl timestamp, source Jira/git URLs), read via `SeossLoader.meta()`. |
@@ -95,8 +96,10 @@ entries has this shape (real values from PIG-692):
 ```
 
 Field-by-field: `issue_key`/`title`/`description` are the requirement itself (what gets appended
-last in every prompt); `resolution_commit` is kept only for provenance (it's a SEOSS hash, not
-resolvable in the local clone); `local_commits` is what Layer 2's `FileVerifier.from_anchors`
+last in every prompt, after `strip_jira_markup` cleans out any `{code}`/`{noformat}` blocks, raw
+URLs, and stack traces — see the retrieval layer section below); `resolution_commit` is kept only
+for provenance (it's a SEOSS hash, not resolvable in the local clone); `local_commits` is what
+Layer 2's `FileVerifier.from_anchors`
 actually windows around; `reference_artefacts` is the SQ3 human-authored comparison target (not
 ground truth, "team practice" per `seoss_loader.py`); `relaxation_level` (0/1/2) records which
 sampling filter tier the requirement qualified at, so the report can state how many of the 20
@@ -115,11 +118,11 @@ each value is a direct read or a deterministic derivation from the tables above.
 | `issue_key` | `issue.issue_id` | Passed straight through as `SampledRequirement.issue_key`. |
 | `title` | `issue.summary` | `Issue.summary` → `SampledRequirement.title` (empty string if `NULL`). |
 | `description` | `issue.description` | `Issue.description` → `SampledRequirement.description`. |
-| `resolution_commit` | `change_set.commit_hash`, `change_set.is_merge`, `change_set_link.issue_id`/`commit_hash`, `code_change.commit_hash` (existence check) | `sampling._acceptance_commit`: walks `commits_for_issue(issue_id)` (join of `change_set` ⋈ `change_set_link` on `commit_hash`/`issue_id`) newest-first, skips rows where `is_merge=1`, returns the first commit whose `files_changed()` (a `code_change` lookup) is non-empty. |
+| `resolution_commit` | `change_set.commit_hash`, `change_set_link.issue_id`/`commit_hash`, `code_change.commit_hash` (existence check) | `sampling._acceptance_commit` → `SeossLoader.anchor_commit_obj`: walks `commits_for_issue(issue_id)` (join of `change_set` ⋈ `change_set_link` on `commit_hash`/`issue_id`) newest-first, returns the first commit whose `files_changed()` (a `code_change` lookup) is non-empty, falling back to the latest linked commit if none touch code. (`is_merge` is uniformly 0 in this dump, confirmed by profiling, so there is no merge-skipping step here anymore — it would be dead code.) |
 | `local_commits` | `change_set.message`, `change_set.author_email`, `change_set.committed_date` (of the anchor commit) — resolved against the **local git log**, not a SEOSS table | `loader.local_anchor_commits(issue_id, commit_index)` takes the anchor commit's `message`/`author_email`/`committed_date` (via `anchor_commit_obj`) and calls `LocalCommitIndex.resolve()`, which matches those three values against `git log` subject/author/date in `data/repos/pig`. Can return more than one hash (duplicate local commits of the same change). |
 | `reference_artefacts` | `issue.description`; `issue_link.source_issue_id`/`target_issue_id`/`is_containment` (→ linked `issue.summary`/`description`); `change_set.message` via `commits_for_issue` | `reference_artefacts()`: starts with the issue's own `description`, appends `summary`+`description` of every issue linked with `is_containment=1` (`Part-of`), then appends the `message` of every commit in `commits_for_issue(issue_id)`. |
 | `relaxation_level` | `issue_comment.issue_id` (count), `issue_link.*` (any link), `code_change` (via `files_changed` in `_acceptance_commit` above) | Not a column anywhere — it's the index of the first predicate in `sampling.predicates` the issue satisfied: level 0 needs `_has_discussion` (`issue_comment` count ≥ 2, or any `issue_link` row) **and** an acceptance commit; level 1 only needs the acceptance commit; level 2 accepts any resolved issue of the target `type`. |
-| *(filter only, not stored)* | `issue.type`, `issue.resolved_date` | `issues(types=("New Feature","Improvement"), require_resolved=True)` is the candidate pool sampling draws from — these two columns decide *eligibility*, not any field value in the frozen record. |
+| *(filter only, not stored)* | `issue.type`, `issue.resolution`, `issue.description` (length) | `issues(types=("New Feature","Improvement"), resolution="Fixed", min_description_len=30)` is the candidate pool sampling draws from (776 issues) — these columns decide *eligibility*, not any field value in the frozen record. `resolution='Fixed'` replaced an earlier, looser `resolved_date IS NOT NULL` filter, which also admitted Duplicate/Won't Fix/Invalid/Cannot Reproduce issues. |
 
 ## The experiment, as code
 
@@ -139,7 +142,7 @@ flowchart TD
         Sampling --> Frozen[data/frozen/requirements.json\n20 requirements + anchors]
     end
 
-    subgraph Retrieval["Retrieval (Phase 2, in progress)"]
+    subgraph Retrieval["Retrieval (Phase 2, mostly done - hybrid.py still scaffolded)"]
         Frozen --> Conditions[conditions.py\n6 conditions x 4 context types]
         Sources[sources.py\nfour context-type builders] --> Chunking[chunking.py\n500/50 char splitter]
         Chunking --> Index[index.py\nChromaDB, context_type metadata]
@@ -189,11 +192,15 @@ duplicate of the same change). It also calls `loader.reference_artefacts(issue_i
 returns a `tuple[ContextType, ...]` — e.g. `FULL_RAG` → all four, `NO_PAST_TICKETS` → the other
 three, `VANILLA` → `()`. This tuple is the only thing that changes between conditions from here on.
 
-**4. Retrieval turns text into a `dict[ContextType, list[str]]`.** For each active context type,
-`hybrid_retrieve(query, active, index, top_k=8)`:
+**4. Retrieval turns text into a `dict[ContextType, list[str]]`.** The requirement's title/
+description is cleaned with `strip_jira_markup` first (removes `{code}`/`{noformat}` blocks, raw
+URLs, stack traces — the same cleaner `past_tickets_chunks` applies when building the index, so a
+query and its corpus can't drift apart). For each active context type, `hybrid_retrieve(query,
+active, index, top_k=8, exclude_issue_id=requirement.issue_key)` (hybrid.py, still scaffolded):
    - dense candidates: `embed_texts([query])[0]` → a 1536-dim vector → `index.dense_query(vector,
-     active, top_k)`, filtered server-side by `where={"context_type": {"$in": [...]}}` → ranked
-     chunk ids.
+     active, top_k, exclude_issue_id)`, filtered server-side by `context_type: {"$in": [...]}` and,
+     when given, `issue_id: {"$ne": ...}` so a requirement's own past_ticket chunk can never be
+     retrieved for itself — ranked chunk ids.
    - lexical candidates: `lexical_rank(query, candidate_texts)` → ranked chunk ids by token
      overlap, no embedding call.
    - `reciprocal_rank_fusion([dense_ids, lexical_ids], k=50)[:8]` → the final `list[str]` of chunk
@@ -250,10 +257,13 @@ tests/                 one test module per implemented component, fixtures over 
 ## Data layer (`src/data/`) — done and tested
 
 - **`seoss_loader.py`** wraps the SEOSS SQLite schema: `issue`, `issue_comment`, `issue_link`,
-  `change_set`, `change_set_link`, `code_change`. Key methods: `issues()` (filter by type/resolved),
+  `change_set`, `change_set_link`, `code_change`. Key methods: `issues(types, resolution="Fixed",
+  min_description_len=30)` (the candidate-pool filter, profiling-derived: 776 issues qualify),
   `comments()`, `linked_issue_ids()` (for containment/sub-task links), `commits_for_issue()`,
-  `files_changed()`, and `reference_artefacts()` which assembles the SQ3 human-authored reference
-  (issue description + linked sub-task text + resolving commit messages).
+  `anchor_commit_obj()`/`commit_for_issue()` (latest commit that touches code, else latest linked
+  commit — `is_merge` is uniformly 0 in this dump, so there's no merge filter), `files_changed()`,
+  and `reference_artefacts()` which assembles the SQ3 human-authored reference (issue description +
+  linked sub-task text + resolving commit messages).
 - **`commit_resolver.py`** (`LocalCommitIndex`) exists because SEOSS's `change_set.commit_hash`
   values come from a *different* git conversion of Pig than the real clone under
   `data/repos/pig`. Every commit is present locally, just under a different hash. Resolution
@@ -268,33 +278,75 @@ tests/                 one test module per implemented component, fixtures over 
   local hashes used by Layer 2), `reference_artefacts`, `relaxation_level`. The sanity subset used
   for early pipeline testing is the first three: PIG-692, PIG-699, PIG-704.
 
-## Retrieval layer (`src/retrieval/`) — partially done
+## Retrieval layer (`src/retrieval/`) — mostly done
 
 - **`chunking.py`** — thin wrapper around `RecursiveCharacterTextSplitter` (LangChain, lazy
   import), fixed at 500 chars / 50 overlap, splitting on paragraph/section boundaries first. Do
   not change these numbers; they're the proposal's fixed config.
 - **`fusion.py`** — `reciprocal_rank_fusion`, done and tested. Fuses any number of ranked lists by
   `1 / (k + rank)`, `k=50`, ties broken by first-seen order for determinism.
-- **`sources.py`** *(new)* — one builder per context type, each returning `Chunk` records
-  (`id`, `text`, `context_type`, `metadata`) ready for chunking and indexing:
-  - `past_tickets_chunks` — issue title + description via `SeossLoader`.
-  - `design_document_chunks` — Forrest XML docs under
+- **`text_clean.py`** *(new, done and tested)* — `strip_jira_markup(text)`, one shared cleaner
+  used both by `past_tickets_chunks` and by whatever builds the retrieval query from the
+  requirement's own title/description. Removes `{code[:lang]}`/`{noformat}` blocks whole (they're
+  source dumps and stack traces, not prose), raw URLs, and Java-style stack-trace lines.
+- **`sources.py`** *(done and tested)* — one builder per context type, each returning `Chunk`
+  records (`id`, `text`, `context_type`, `metadata`) ready for chunking and indexing:
+  - `past_tickets_chunks(loader)` — the full 776-issue candidate pool (New Feature/Improvement,
+    `resolution='Fixed'`, description floor), cleaned with `strip_jira_markup`. This is the full
+    corpus, not the frozen 20, and it is **not** excluded per-requirement at build time — the same
+    shared index is reused across all 20 requirements, so excluding a requirement's own issue
+    happens as a query-time metadata filter (`index.dense_query(..., exclude_issue_id=...)`)
+    instead. Every chunk's metadata carries `issue_id` so that filter has something to match.
+  - `design_document_chunks(docs_dir)` — Forrest XML docs under
     `data/repos/pig/src/docs/src/documentation/content/xdocs/`, text extracted with
-    `xml.etree.ElementTree` (not treated as markdown, since it's structured XML).
-  - `coding_convention_chunks` — `data/repos/pig/test/checkstyle.xml` + top-level `README.txt`,
-    kept as raw text (not XML-parsed) because checkstyle's descriptive value lives mostly in its
-    XML *comments*, which `ElementTree` silently drops.
-  - `codebase_summary_chunks` — one LLM summary per `.java` file under
-    `data/repos/pig/src/org/apache/pig/` (the real test tree lives in a separate top-level `test/`
-    directory, so scoping to `src/org` already excludes it). Summaries are cached to disk keyed by
-    file path so re-runs never re-call the model; a full-corpus pass (1088 files) always prints a
-    count and waits for explicit confirmation before spending API calls.
-- **`index.py`** (`ContextIndex`) — single ChromaDB collection, every chunk tagged with a
-  `context_type` metadata field so one collection serves all four types and every ablation
-  condition filters by `context_type: {"$in": [...]}` rather than needing four separate indexes.
-  Embeddings come from `text-embedding-3-small` (`llm/openai_client.py:embed_texts`).
-- **`hybrid.py`** — dense candidates from `index.dense_query`, lexical candidates from the local
-  token-overlap `lexical_rank`, fused with `reciprocal_rank_fusion`, top 8 returned
+    `xml.etree.ElementTree`. Four of the fifteen files (`basic`, `func`, `pig-index`, `udf.xml`)
+    contain undeclared HTML entities (`&nbsp;`, `&lsquo;`, ...) with no DTD to resolve them, which
+    plain `ElementTree` rejects; these are substituted via `html.entities.html5` before parsing.
+    `site.xml`/`tabs.xml` are pure navigation config and correctly yield no chunk.
+  - `coding_convention_chunks(repo_path)` — `data/repos/pig/test/checkstyle.xml` + top-level
+    `README.txt`, kept as raw text (not XML-parsed) because checkstyle's descriptive value lives
+    mostly in its XML *comments*, which `ElementTree` silently drops.
+  - `codebase_summary_chunks(repo_path, cache_dir, llm=None, file_paths=None, confirm=False)` —
+    one LLM summary per `.java` file under `data/repos/pig/src/org/apache/pig/` (the real test
+    tree lives in a separate top-level `test/` directory, so scoping to `src/org` already excludes
+    it; 1088 files total). Summaries are cached to disk (one JSON per file, keyed by relative
+    path) so re-runs only pay for files not yet cached. Deliberately **purely descriptive**
+    (researcher decision): the prompt tells the model to quote only real identifiers literally
+    present in the file and never to infer or list Pig Latin operators/keywords that aren't
+    explicitly there — that speculative-association job belongs to lexical retrieval over real code
+    symbols, not a synthetic summary that would pollute retrieval unauditably if it guessed wrong.
+    `pending_summary_files(...)` is the free/no-cost lookup to see how many files still need a
+    summary; `codebase_summary_chunks` refuses to spend any LLM calls unless `confirm=True`, so a
+    full 1088-file sweep can't happen by accident.
+  - **Metadata boundary, enforced by construction:** none of these four builders ever reads
+    `issue_component`, `issue_fix_version`, or non-containment `issue_link` rows — only
+    `issue.summary`/`description` feed `past_tickets_chunks`, per `CLAUDE.md`.
+- **`index.py`** (`ContextIndex`) *(done and tested)* — a single, shared, persistent ChromaDB
+  collection (`./data/chroma` by default) used for both the sanity build and the eventual full run,
+  so retrieval draws from an identical corpus in both. Every chunk is tagged with a `context_type`
+  metadata field so one collection serves all four types and every ablation condition filters by
+  `context_type: {"$in": [...]}` rather than needing four separate indexes.
+  - `add_chunks(chunks, embed_fn=None)` is the bridge from `sources.py`: splits each `Chunk.text`
+    via the tested `chunking.py` splitter, embeds the pieces in batches of 100
+    (`text-embedding-3-small` via `llm/openai_client.py:embed_texts`, lazy import), and
+    **upserts** (not `add`s) into the collection — upsert makes it safe to call this again with an
+    overlapping or growing chunk list without erroring on duplicate ids or needing a rebuild. This
+    is exactly what lets `codebase_summaries` be built incrementally: a small bounded slice is
+    enough for the sanity run, and the full 1088-file pass lands later as a separate, confirmed
+    step, added into the *same* collection.
+  - `dense_query(query_embedding, active, top_k, exclude_issue_id=None)` — empty `active` (the
+    `VANILLA` condition) short-circuits to an empty result without querying ChromaDB at all, since
+    chromadb 1.1.0 rejects an empty `$in` list.
+  - `assert_codebase_summaries_complete(total_files)` — the hard gate for the real 120-generation
+    run: prints `"codebase_summaries coverage: X/Y files embedded."` and raises unless every
+    main-source file has a chunk in the shared index. The sanity run is explicitly allowed to query
+    a partially-populated `codebase_summaries` set; the full run must not start until it's
+    complete, otherwise `full_rag`/leave-one-out conditions would run against an incomplete
+    codebase and the ablation would be invalid. (Not yet wired into an automatic run script — that
+    lands with the run driver in a later sub-part.)
+- **`hybrid.py`** — the one piece still scaffolded: dense candidates from `index.dense_query`,
+  lexical candidates from the local token-overlap `lexical_rank`, fused with
+  `reciprocal_rank_fusion`, top 8 returned
   (`TOP_K = 8`, matches `config.yaml: retrieval.top_k`). The `active` context types passed in are
   exactly `conditions.active_contexts(condition)` — this is the mechanism that makes the six
   conditions "the same call, different filter."
@@ -404,8 +456,12 @@ full filesystem access.
 ## Current status (see `CLAUDE.md` for the authoritative build order)
 
 Done and tested: `schema.py`, `conditions.py`, `retrieval/fusion.py`, `retrieval/chunking.py`,
+`retrieval/text_clean.py`, `retrieval/sources.py`, `retrieval/index.py`,
 `pipeline/prompt_assembly.py`, `eval/file_verifier.py`, `eval/structural.py`,
 `eval/comparisons.py`, `analysis/stats.py`, `data/seoss_loader.py`, `data/sampling.py`,
-`data/commit_resolver.py`. In progress: `retrieval/sources.py`, `retrieval/index.py`,
-`retrieval/hybrid.py` (item #2 in the build order). Still scaffolded: `pipeline/generate.py`,
-`eval/judge.py`; `eval/calibration.py` is ready and just needs real researcher-vs-judge choices.
+`data/commit_resolver.py`. In progress: `retrieval/hybrid.py` (the last piece of item #2 in the
+build order). Still scaffolded: `pipeline/generate.py`, `eval/judge.py`; `eval/calibration.py` is
+ready and just needs real researcher-vs-judge choices. Not yet run: the real `confirm=True`
+`codebase_summary_chunks` sweep over all 1088 main-source files (pending count confirmed as 1088,
+zero spent so far), and the sanity-set index build/run against PIG-692/PIG-699/PIG-704 (item #2's
+last sub-part).

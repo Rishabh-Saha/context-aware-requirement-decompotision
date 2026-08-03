@@ -1,0 +1,304 @@
+[
+  {
+    "issue_key": "PIG-692",
+    "title": "when running script file, automatically set up job name based on the file name",
+    "description": "When running pig script from command like like this:\n\npig scriptfile\n\nright now default job name is used. it is convenient to have it automatically set up based on the script name.\n\n",
+    "resolution_commit": "98f01f5d875b6c4f83c0d5469456457865b653c8",
+    "local_commits": [
+      "afb2ec1dc3d30a761756cf4840528b40a0b2e52d",
+      "de7c18327577f30d248ab755ac959467e32bfe2b"
+    ],
+    "reference_artefacts": [
+      "When running pig script from command like like this:\n\npig scriptfile\n\nright now default job name is used. it is convenient to have it automatically set up based on the script name.",
+      "PIG-692 When running a job from a script, use that script name as the default job name.\n\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@750271 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-704",
+    "title": "Interactive mode doesn't list defined aliases",
+    "description": "I'm using the interactive mode to test my scripts, and I'm struggling to keep track of 2 things:\n\n1) the aliases. A typical test script has 10 aliases or more. As the test goes on, different versions are created, or aliases are created with typos. There's no command in grunt to get the list of defined aliases. Proposed solution: add a new command \"aliases\" that prints the list of aliases.\n\n2) I prefer to give meaningful (long) names to my aliases. But as I try different things, I find it hard to predict what the schema will look like, so I use DESCRIBE a lot. It's a pain to type these long names all the time, especially since most of the time I only want to describe the last alias created. A shortcut to the describe command describing the last alias will be very useful. Proposed solution: use the special name \"_\" as a shortcut to the last created alias: DECRIBE _.",
+    "resolution_commit": "1976cb567395296e84245086b2e9572bbfb206af",
+    "local_commits": [
+      "3436286560661805554fa686977a17e7ec02f762",
+      "cc7e80206a804808031477f05150d4af531b9713"
+    ],
+    "reference_artefacts": [
+      "I'm using the interactive mode to test my scripts, and I'm struggling to keep track of 2 things:\n\n1) the aliases. A typical test script has 10 aliases or more. As the test goes on, different versions are created, or aliases are created with typos. There's no command in grunt to get the list of defined aliases. Proposed solution: add a new command \"aliases\" that prints the list of aliases.\n\n2) I prefer to give meaningful (long) names to my aliases. But as I try different things, I find it hard to predict what the schema will look like, so I use DESCRIBE a lot. It's a pain to type these long names all the time, especially since most of the time I only want to describe the last alias created. A shortcut to the describe command describing the last alias will be very useful. Proposed solution: use the special name \"_\" as a shortcut to the last created alias: DECRIBE _.",
+      "PIG-704 Added ALIASES command that shows all currently defined ALIASES.  Changed semantics of DEFINE to define last used alias if no argument is given (ericg via gates).\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@755061 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-713",
+    "title": "Autocompletion doesn't complete aliases",
+    "description": "Autocompletion only knows about keywords, but in different contexts, it would be nice if it completed aliases where an alias is expected.",
+    "resolution_commit": "d6a8bf2af9bf00b99214e5b525cc26fb4bb1db62",
+    "local_commits": [
+      "7ad5a11fe01742c8d59ca9b112634731c9becc9a",
+      "7002ab1cb45e45b7f02747ab068e23d12cbf90da"
+    ],
+    "reference_artefacts": [
+      "Autocompletion only knows about keywords, but in different contexts, it would be nice if it completed aliases where an alias is expected.",
+      "PIG-713 Added alias completion as part of tab completion in grunt.\n\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@758687 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-745",
+    "title": "Please add DataTypes.toString() conversion function",
+    "description": "I'm doing some work in string manipulation UDFs and I've found that it would be very convenient if I could always convert the argument to a chararray (internally a Java String).\n\nFor example TOLOWERCASE(arg) shouldn't really care whether arg is a bytearray, chararray, int, long, double, or float, it should be treated as a string and operated on.\n\nThe simplest and most foolproof method would be if the DataTypes added a static function of  DataTypes.toString which did all of the argument type checking and provided consistent translation.\n\nI believe that this function might be coded as:\n\n    public static String toString(Object o) throws ExecException {\n        try {\n\t\t\tswitch (findType(o)) {\n\t\t\tcase BOOLEAN:\n\t\t\t    if (((Boolean)o) == true) return new String('1');\n\t\t\t    else return new String('0');\n\n\t\t\tcase BYTE:\n\t\t\t    return ((Byte)o).toString();\n\n\t\t\tcase INTEGER:\n\t\t\t    return ((Integer)o).toString();\n\n\t\t\tcase LONG:\n\t\t\t    return ((Long)o).toString();\n\n\t\t\tcase FLOAT:\n\t\t\t    return ((Float)o).toString();\n\n\t\t\tcase DOUBLE:\n\t\t\t    return ((Double)o).toString();\n\n\t\t\tcase BYTEARRAY:\n\t\t\t    return ((DataByteArray)o).toString();\n\n\t\t\tcase CHARARRAY:\n\t\t            return (String)o;\n\n\t\t\tcase NULL:\n\t\t\t    return null;\n\n\t\t\tcase MAP:\n\t\t\tcase TUPLE:\n\t\t\tcase BAG:\n\t\t\tcase UNKNOWN:\n\t\t\tdefault:\n\t\t\t    int errCode = 1071;\n\t\t\t    String msg = \"Cannot convert a \" + findTypeName(o) +\n\t\t\t    \" to an String\";\n\t\t\t    throw new ExecException(msg, errCode, PigException.INPUT);\n\t\t\t}\n\t\t} catch (ExecException ee) {\n\t\t\tthrow ee;\n\t\t} catch (Exception e) {\n\t\t\tint errCode = 2054;\n\t\t\tString msg = \"Internal error. Could not convert \" + o + \" to String.\";\n\t\t\tthrow new ExecException(msg, errCode, PigException.BUG);\n\t\t}\n    }\n\n",
+    "resolution_commit": "6d4ccac86b461f7da3fc72cd66dbf13f8c8d69cf",
+    "local_commits": [
+      "4636221423e06b823029d8d0672a414362d0d596",
+      "58342335a5463cadc1c9936dcfe9990db5541cb9"
+    ],
+    "reference_artefacts": [
+      "I'm doing some work in string manipulation UDFs and I've found that it would be very convenient if I could always convert the argument to a chararray (internally a Java String).\n\nFor example TOLOWERCASE(arg) shouldn't really care whether arg is a bytearray, chararray, int, long, double, or float, it should be treated as a string and operated on.\n\nThe simplest and most foolproof method would be if the DataTypes added a static function of  DataTypes.toString which did all of the argument type checking and provided consistent translation.\n\nI believe that this function might be coded as:\n\n    public static String toString(Object o) throws ExecException {\n        try {\n\t\t\tswitch (findType(o)) {\n\t\t\tcase BOOLEAN:\n\t\t\t    if (((Boolean)o) == true) return new String('1');\n\t\t\t    else return new String('0');\n\n\t\t\tcase BYTE:\n\t\t\t    return ((Byte)o).toString();\n\n\t\t\tcase INTEGER:\n\t\t\t    return ((Integer)o).toString();\n\n\t\t\tcase LONG:\n\t\t\t    return ((Long)o).toString();\n\n\t\t\tcase FLOAT:\n\t\t\t    return ((Float)o).toString();\n\n\t\t\tcase DOUBLE:\n\t\t\t    return ((Double)o).toString();\n\n\t\t\tcase BYTEARRAY:\n\t\t\t    return ((DataByteArray)o).toString();\n\n\t\t\tcase CHARARRAY:\n\t\t            return (String)o;\n\n\t\t\tcase NULL:\n\t\t\t    return null;\n\n\t\t\tcase MAP:\n\t\t\tcase TUPLE:\n\t\t\tcase BAG:\n\t\t\tcase UNKNOWN:\n\t\t\tdefault:\n\t\t\t    int errCode = 1071;\n\t\t\t    String msg = \"Cannot convert a \" + findTypeName(o) +\n\t\t\t    \" to an String\";\n\t\t\t    throw new ExecException(msg, errCode, PigException.INPUT);\n\t\t\t}\n\t\t} catch (ExecException ee) {\n\t\t\tthrow ee;\n\t\t} catch (Exception e) {\n\t\t\tint errCode = 2054;\n\t\t\tString msg = \"Internal error. Could not convert \" + o + \" to String.\";\n\t\t\tthrow new ExecException(msg, errCode, PigException.BUG);\n\t\t}\n    }",
+      "PIG-745: Add DataType.toString() to force basic types to chararray, useful for UDFs that want to handle all simple types as strings.\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@763421 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-712",
+    "title": "Need utilities to create schemas for bags and tuples",
+    "description": "Pig should provide utilities to create bag and tuple schemas. Currently, users return schemas in outputSchema method and end up with very verbose boiler plate code. It will be very nice if Pig encapsulates the boiler plate code in utility methods.",
+    "resolution_commit": "e0430bf85876d30db93f042e39b1e0153a6c4baf",
+    "local_commits": [
+      "01cb59f91e7af7f2451f6914cc25ce8d22023a22",
+      "36c832520c08af3e67dbefad488f6f72b8e31cd6"
+    ],
+    "reference_artefacts": [
+      "Pig should provide utilities to create bag and tuple schemas. Currently, users return schemas in outputSchema method and end up with very verbose boiler plate code. It will be very nice if Pig encapsulates the boiler plate code in utility methods.",
+      "PIG-712: Added utility functions to create schemas for tuples and bags.\n\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@768049 13f79535-47bb-0310-9956-ffa450edef68",
+      "PIG-712: Added utility functions to create schemas for tuples and bags (zjffdu via sms)\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@768372 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-732",
+    "title": "Utility UDFs ",
+    "description": "Two utility UDFs and their respective test cases.\n\n1. TopN - Accepts number of tuples (N) to retain in output, field number (type long) to use for comparison, and an sorted/unsorted bag of tuples. It outputs a bag containing top N tuples.\n\n2. SearchQuery - Accepts an encoded URL from any of the 4 search engines (Yahoo, Google, AOL, Live) and extracts and normalizes the search query present in it.\n",
+    "resolution_commit": "35e82d987661cc663b11623c32cb0dc62c6b39e5",
+    "local_commits": [
+      "1181771f043f7ef188230bae7d5accbdc82571c2",
+      "6c5c7a855074457a11fe2401824ca736f7ac57aa"
+    ],
+    "reference_artefacts": [
+      "Two utility UDFs and their respective test cases.\n\n1. TopN - Accepts number of tuples (N) to retain in output, field number (type long) to use for comparison, and an sorted/unsorted bag of tuples. It outputs a bag containing top N tuples.\n\n2. SearchQuery - Accepts an encoded URL from any of the 4 search engines (Yahoo, Google, AOL, Live) and extracts and normalizes the search query present in it.",
+      "PIG-732: additional UDFs\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@770445 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-627",
+    "title": "PERFORMANCE: multi-query optimization",
+    "description": "Currently, if your Pig script contains multiple stores and some shared computation, Pig will execute several independent queries. For instance:\n\nA = load 'data' as (a, b, c);\nB = filter A by a > 5;\nstore B into 'output1';\nC = group B by b;\nstore C into 'output2';\n\nThis script will result in map-only job that generated output1 followed by a map-reduce job that generated output2. As the resuld data is read, parsed and filetered twice which is unnecessary and costly. ",
+    "resolution_commit": "b303db3fd2c223ee865a47ed420b2d204eb8649e",
+    "local_commits": [
+      "bc1f2754d2e38d360643c838740972c073c8f655",
+      "601345b077daf22f669c8ed841976ee4dffdcb2b"
+    ],
+    "reference_artefacts": [
+      "Currently, if your Pig script contains multiple stores and some shared computation, Pig will execute several independent queries. For instance:\n\nA = load 'data' as (a, b, c);\nB = filter A by a > 5;\nstore B into 'output1';\nC = group B by b;\nstore C into 'output2';\n\nThis script will result in map-only job that generated output1 followed by a map-reduce job that generated output2. As the resuld data is read, parsed and filetered twice which is unnecessary and costly.",
+      "PIG-627: multiquery support phase 1 and phase 2 (hagleitn and Richard Ding via pradeepkth)\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@767974 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-795",
+    "title": "Command that selects a random sample of the rows, similar to LIMIT",
+    "description": "When working with very large data sets (imagine that!), running a pig script can take time. It may be useful to run on a small subset of the data in some situations (eg: debugging / testing, or to get fast results even if less accurate.) \n\nThe command \"LIMIT N\" selects the first N rows of the data, but these are not necessarily randomzed. A command \"SAMPLE X\" would retain the row only with the probability x%.\n\nNote: it is possible to implement this feature with FILTER BY and an UDF, but so is LIMIT, and limit is built-in.\n\n",
+    "resolution_commit": "90335186f82431558d90c21bad28b1e278dc3df5",
+    "local_commits": [
+      "966713f8bdaf4ee7c27952b2e8be82cf09f8d1c3",
+      "5ac881b900180c9993e22a5396f354613f1c47b5"
+    ],
+    "reference_artefacts": [
+      "When working with very large data sets (imagine that!), running a pig script can take time. It may be useful to run on a small subset of the data in some situations (eg: debugging / testing, or to get fast results even if less accurate.) \n\nThe command \"LIMIT N\" selects the first N rows of the data, but these are not necessarily randomzed. A command \"SAMPLE X\" would retain the row only with the probability x%.\n\nNote: it is possible to implement this feature with FILTER BY and an UDF, but so is LIMIT, and limit is built-in.",
+      "PIG-795: support for SAMPLE command\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@771438 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-741",
+    "title": "Add LIMIT as a statement that works in nested FOREACH",
+    "description": "I'd like to compute the top 10 results in each group.\n\nThe natural way to express this in Pig would be:\n\n{code}\nA = load '...' using PigStorage() as (\n    date: int,\n    count: int,\n    url: chararray\n);\n\nB = group A by ( date );\n\nC = foreach B {\n    D = order A by count desc;\n    E = limit D 10;\n    generate\n        FLATTEN(E);\n    };\n\ndump C;\n{code}\n\nYeah, I could write a UDF / PiggyBank function to take the top n results. But since LIMIT already exists as a statement, it seems like it should also work in the nested foreach context.\n\nExample workaround code.\n\n{code}\nC = foreach B {\n    D = order A by count desc;\n    E = util.TOP(D, 10);\n    generate\n        FLATTEN(E);\n    };\n\ndump C;\n{code}",
+    "resolution_commit": "039483ae780ff6bc2e95bb89dc27d1081325e753",
+    "local_commits": [
+      "c74be531f627a9ada51fece94f57069d94706d0f",
+      "17e3122a63d9b22f671085debae1e6508cb2be88"
+    ],
+    "reference_artefacts": [
+      "I'd like to compute the top 10 results in each group.\n\nThe natural way to express this in Pig would be:\n\n{code}\nA = load '...' using PigStorage() as (\n    date: int,\n    count: int,\n    url: chararray\n);\n\nB = group A by ( date );\n\nC = foreach B {\n    D = order A by count desc;\n    E = limit D 10;\n    generate\n        FLATTEN(E);\n    };\n\ndump C;\n{code}\n\nYeah, I could write a UDF / PiggyBank function to take the top n results. But since LIMIT already exists as a statement, it seems like it should also work in the nested foreach context.\n\nExample workaround code.\n\n{code}\nC = foreach B {\n    D = order A by count desc;\n    E = util.TOP(D, 10);\n    generate\n        FLATTEN(E);\n    };\n\ndump C;\n{code}",
+      "PIG-741 Allow limit to be nested in foreach (gates).\n\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@771844 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-626",
+    "title": "Statistics (records read by each mapper and reducer)",
+    "description": "This uses the counters framework that hadoop has. Initially, I am just interested in finding out the number of records read by each mapper/reducer particularly for the last job in any script. A sample code to access the statistics for the last job:\n\nString reducePlan = stats.getPigStats().get(stats.getLastJobID()).get(\"PIG_STATS_REDUCE_PLAN\");\n        if(reducePlan == null) {\n            System.out.println(\"Records written : \" + stats.getPigStats().get(stats.getLastJobID()).get(\"PIG_STATS_MAP_OUTPUT_RECORDS\"));\n        } else {\n            System.out.println(\"Records written : \" + stats.getPigStats().get(stats.getLastJobID()).get(\"PIG_STATS_REDUCE_OUTPUT_RECORDS\"));\n        }\nThe patch contains 7 test cases. These include tests PigStorage and BinStorage along with one for multiple MR jobs case.",
+    "resolution_commit": "b5da18c2fcc43b5bf5512701cda9bf7a174e0999",
+    "local_commits": [
+      "4e73719bda21fe21117c6d6edfa86f2db45cdfef",
+      "5b8c5be8549c37da7589fd871c2b8b1b9489468e"
+    ],
+    "reference_artefacts": [
+      "This uses the counters framework that hadoop has. Initially, I am just interested in finding out the number of records read by each mapper/reducer particularly for the last job in any script. A sample code to access the statistics for the last job:\n\nString reducePlan = stats.getPigStats().get(stats.getLastJobID()).get(\"PIG_STATS_REDUCE_PLAN\");\n        if(reducePlan == null) {\n            System.out.println(\"Records written : \" + stats.getPigStats().get(stats.getLastJobID()).get(\"PIG_STATS_MAP_OUTPUT_RECORDS\"));\n        } else {\n            System.out.println(\"Records written : \" + stats.getPigStats().get(stats.getLastJobID()).get(\"PIG_STATS_REDUCE_OUTPUT_RECORDS\"));\n        }\nThe patch contains 7 test cases. These include tests PigStorage and BinStorage along with one for multiple MR jobs case.",
+      "PIG-626: Add access to hadoop counters.\n\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@773683 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-781",
+    "title": "Error reporting for failed MR jobs",
+    "description": "If we have multiple MR jobs to run and some of them fail the behavior of the system is to not stop on the first failure but to keep going. That way jobs that do not depend on the failed job might still succeed.\n\nThe question is to how best report this scenario to a user. How do we tell which jobs failed and which didn't?\n\nOne way could be to tie jobs to stores and report which store locations won't have data and which ones do.",
+    "resolution_commit": "20c9bdb06da0a868e46a26cbd5087078815a4c99",
+    "local_commits": [
+      "96db683e56267e384198b89c5e8d46c1109f61b5",
+      "19ceafad0bdc96dcd15cf9716acf6df45dd9562c"
+    ],
+    "reference_artefacts": [
+      "If we have multiple MR jobs to run and some of them fail the behavior of the system is to not stop on the first failure but to keep going. That way jobs that do not depend on the failed job might still succeed.\n\nThe question is to how best report this scenario to a user. How do we tell which jobs failed and which didn't?\n\nOne way could be to tie jobs to stores and report which store locations won't have data and which ones do.",
+      "PIG-781: Error reporting for failed MR jobs (hagleitn via olgan)\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@775239 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-830",
+    "title": "Port Apache Log parsing piggybank contrib to Pig 0.2",
+    "description": "The piggybank contribs (pig-472, pig-473,  pig-474, pig-476, pig-486, pig-487, pig-488, pig-503, pig-509) got dropped after the types branch was merged in.\nThey should be updated to work with the current APIs and added back into trunk.",
+    "resolution_commit": "a1a74e9b37d55e096baea9f596bfb5cbe86de04b",
+    "local_commits": [
+      "b7a5eb54158fcbb96d1175d29afb89bde90db534",
+      "88ae771a97ac83da5e062aba51bb500f4ed5f466"
+    ],
+    "reference_artefacts": [
+      "The piggybank contribs (pig-472, pig-473,  pig-474, pig-476, pig-486, pig-487, pig-488, pig-503, pig-509) got dropped after the types branch was merged in.\nThey should be updated to work with the current APIs and added back into trunk.",
+      "PIG-830: Add RegExLoader and apache log utils to piggybank.\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@782143 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-753",
+    "title": "Provide support for UDFs without parameters",
+    "description": "Pig do not support UDF without parameters, it force me provide a parameter.\n\nlike the following statement:\n\n B = FOREACH A GENERATE bagGenerator();  this will generate error. I have to provide a parameter like following\n\n B = FOREACH A GENERATE bagGenerator($0);\n\n\n\n ",
+    "resolution_commit": "d125ddbe5bf9045e4a91a06e6dc0743c11e71051",
+    "local_commits": [
+      "de47c35cb565575d5bf38e0da7d7f1575c553450",
+      "8d7950683aa4f999499f6705242a0a76f0f891c1"
+    ],
+    "reference_artefacts": [
+      "Pig do not support UDF without parameters, it force me provide a parameter.\n\nlike the following statement:\n\n B = FOREACH A GENERATE bagGenerator();  this will generate error. I have to provide a parameter like following\n\n B = FOREACH A GENERATE bagGenerator($0);",
+      "PIG-753 Allow UDFs with no parameters.\n\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@786366 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-832",
+    "title": "Make import list configurable",
+    "description": "Currently, it is hardwired in PigContext.",
+    "resolution_commit": "ed00ada6caf7a742fc64e66d7d2348204c9b0139",
+    "local_commits": [
+      "f75bfeaa8f4b031cbf6de9312a549c1fad19ec80",
+      "80ac0f055e266cb524331fc6b3b022586410e2e8"
+    ],
+    "reference_artefacts": [
+      "Currently, it is hardwired in PigContext.",
+      "PIG-832: Make import list configurable\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@787908 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-868",
+    "title": "indexof / lastindexof / lower / replace / substring udf's",
+    "description": "We parse some apache logs using pig and are using some pretty simple udf's like this:\n\nB = FOREACH A GENERATE substring(uri, lastindexof(uri, '/')+1, indexof(uri, '.txt')) as lang;\n\nIt's pretty simple stuff but I figured someone else might find it useful.",
+    "resolution_commit": "31d34cd0770b1995159e7b20d96eba3231e3586e",
+    "local_commits": [
+      "bebed5575fd598d3b43cb9d9cd3144451d7bcb7a",
+      "73141d266439c68d26ef864e3f33fb9af9e4ef05"
+    ],
+    "reference_artefacts": [
+      "We parse some apache logs using pig and are using some pretty simple udf's like this:\n\nB = FOREACH A GENERATE substring(uri, lastindexof(uri, '/')+1, indexof(uri, '.txt')) as lang;\n\nIt's pretty simple stuff but I figured someone else might find it useful.",
+      "PIG-868: added strin manipulation functions (bennies via olgan)\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@789814 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-820",
+    "title": "PERFORMANCE:  The RandomSampleLoader should be changed to allow it subsume another loader",
+    "description": "Currently a sampling job requires that data already be stored in BinaryStorage format, since RandomSampleLoader extends BinaryStorage.  For order by this\nhas mostly been acceptable, because users tend to use order by at the end of their script where other MR jobs have already operated on the data and thus it\nis already being stored in BinaryStorage.  For pig scripts that just did an order by, an entire MR job is required to read the data and write it out\nin BinaryStorage format.\n\nAs we begin work on join algorithms that will require sampling, this requirement to read the entire input and write it back out will not be acceptable.\nJoin is often the first operation of a script, and thus is much more likely to trigger this useless up front translation job.\n\nInstead RandomSampleLoader can be changed to subsume an existing loader, using the user specified loader to read the tuples while handling the skipping\nbetween tuples itself.  This will require the subsumed loader to implement a Samplable Interface, that will look something like:\n\n{code}\npublic interface SamplableLoader extends LoadFunc {\n    \n    /**\n     * Skip ahead in the input stream.\n     * @param n number of bytes to skip\n     * @return number of bytes actually skipped.  The return semantics are\n     * exactly the same as {@link java.io.InpuStream#skip(long)}\n     */\n    public long skip(long n) throws IOException;\n    \n    /**\n     * Get the current position in the stream.\n     * @return position in the stream.\n     */\n    public long getPosition() throws IOException;\n}\n{code}\n\nThe MRCompiler would then check if the loader being used to load data implemented the SamplableLoader interface.  If so, rather than create an initial MR\njob to do the translation it would create the sampling job, having RandomSampleLoader use the user specified loader.\n",
+    "resolution_commit": "09801e0f4a36b81202d725e9396221db80a69535",
+    "local_commits": [
+      "bbbb04f277dc1522f9517749827959dc870ae1eb",
+      "b25739cc72a6d8db01276c6c8010411b6784b4e7"
+    ],
+    "reference_artefacts": [
+      "Currently a sampling job requires that data already be stored in BinaryStorage format, since RandomSampleLoader extends BinaryStorage.  For order by this\nhas mostly been acceptable, because users tend to use order by at the end of their script where other MR jobs have already operated on the data and thus it\nis already being stored in BinaryStorage.  For pig scripts that just did an order by, an entire MR job is required to read the data and write it out\nin BinaryStorage format.\n\nAs we begin work on join algorithms that will require sampling, this requirement to read the entire input and write it back out will not be acceptable.\nJoin is often the first operation of a script, and thus is much more likely to trigger this useless up front translation job.\n\nInstead RandomSampleLoader can be changed to subsume an existing loader, using the user specified loader to read the tuples while handling the skipping\nbetween tuples itself.  This will require the subsumed loader to implement a Samplable Interface, that will look something like:\n\n{code}\npublic interface SamplableLoader extends LoadFunc {\n    \n    /**\n     * Skip ahead in the input stream.\n     * @param n number of bytes to skip\n     * @return number of bytes actually skipped.  The return semantics are\n     * exactly the same as {@link java.io.InpuStream#skip(long)}\n     */\n    public long skip(long n) throws IOException;\n    \n    /**\n     * Get the current position in the stream.\n     * @return position in the stream.\n     */\n    public long getPosition() throws IOException;\n}\n{code}\n\nThe MRCompiler would then check if the loader being used to load data implemented the SamplableLoader interface.  If so, rather than create an initial MR\njob to do the translation it would create the sampling job, having RandomSampleLoader use the user specified loader.",
+      "PIG-820: Change RandomSampleLoader to take a LoadFunc instead of extending BinStorage.  Added new Samplable interface for loaders to implement allowing them to be used by RandomSampleLoader.\n\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@789523 13f79535-47bb-0310-9956-ffa450edef68",
+      "PIG-820: additional fixes to original patch (Ashutosh Chauhan via pradeepkth)\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@791916 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-792",
+    "title": "PERFORMANCE: Support skewed join in pig",
+    "description": "Fragmented replicated join has a few limitations:\n - One of the tables needs to be loaded into memory\n - Join is limited to two tables\n\nSkewed join partitions the table and joins the records in the reduce phase. It computes a histogram of the key space to account for skewing in the input records. Further, it adjusts the number of reducers depending on the key distribution.\n\nWe need to implement the skewed join in pig.",
+    "resolution_commit": "bbf2cb0686909803332f07a33a49c79e29f98a72",
+    "local_commits": [
+      "fa3f90504f164579409045b50f253639a281dea1",
+      "e80bee1f6a0dcdcf6c4cdfe7f1b26aaa90faecea"
+    ],
+    "reference_artefacts": [
+      "Fragmented replicated join has a few limitations:\n - One of the tables needs to be loaded into memory\n - Join is limited to two tables\n\nSkewed join partitions the table and joins the records in the reduce phase. It computes a histogram of the key space to account for skewing in the input records. Further, it adjusts the number of reducers depending on the key distribution.\n\nWe need to implement the skewed join in pig.",
+      "PIG-792: skew join implementation (sriranjan via olgan)\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@799141 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-885",
+    "title": "New UDFs for piggybank (Bin, Decode, LookupInFiles, RegexExtract, RegexMatch, HashFVN, DiffDate)",
+    "description": "Bunch of UDFs:\n1. Bin -- Converts a continuous value into discrete values\n2. Decode -- Converts a given attribute or expression into another string value, based on the value of the source attribute\n3. LookupInFiles -- Check for the existence of an expression in a serial of text files\n4. RegexExtract and RegexMatch -- Similar to perl regexes\n5. HashFNV -- An implementation of FNV hash\n6. DiffDate -- Caculate the number of days in between",
+    "resolution_commit": "ace3f80bd1dbc50351227f2197bd87aa45533cb0",
+    "local_commits": [
+      "1386885faaa86adbf6caa6460bf18684c46301cb",
+      "bf4524cea521260d793d62834c3b57f5b3efd5fb"
+    ],
+    "reference_artefacts": [
+      "Bunch of UDFs:\n1. Bin -- Converts a continuous value into discrete values\n2. Decode -- Converts a given attribute or expression into another string value, based on the value of the source attribute\n3. LookupInFiles -- Check for the existence of an expression in a serial of text files\n4. RegexExtract and RegexMatch -- Similar to perl regexes\n5. HashFNV -- An implementation of FNV hash\n6. DiffDate -- Caculate the number of days in between",
+      "PIG-885: New UDFs for piggybank (Bin, Decode, LookupInFiles, RegexExtract, RegexMatch, HashFVN, DiffDate)\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@799485 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-893",
+    "title": "support cast of chararray to other simple types",
+    "description": "Pig should support casting of chararray to integer,long,float,double,bytearray. If the conversion fails for reasons such as overflow, cast should return null and log a warning.",
+    "resolution_commit": "5618fcd2dede44eb3e4c7829cabc2f40be109e50",
+    "local_commits": [
+      "99aa026e4d30a39715996b12d0d891a2915a2a88",
+      "c76ae84d30a3de029139cc9098d829ccde29e63b"
+    ],
+    "reference_artefacts": [
+      "Pig should support casting of chararray to integer,long,float,double,bytearray. If the conversion fails for reasons such as overflow, cast should return null and log a warning.",
+      "PIG-893:  Added string -> integer, long, float, and double casts.\n\n\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@803373 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  },
+  {
+    "issue_key": "PIG-907",
+    "title": "Provide multiple version of HashFNV (Piggybank)",
+    "description": "HashFNV takes 1 or 2 parameters. It is better to create 2 versions of HashFNV when PIG-902 is not solved. So we can let the Pig pick the right version, do the type cast. Otherwise, user have to do the explicit cast. ",
+    "resolution_commit": "c1582744ccbc4b822ab8a7932ea05bfd6541949d",
+    "local_commits": [
+      "efb4bc75f59958d9fbd4f6eca6b9ea4e6157efa8",
+      "db9e3ddea47ab826e57e711beadb567ac0b8863e"
+    ],
+    "reference_artefacts": [
+      "HashFNV takes 1 or 2 parameters. It is better to create 2 versions of HashFNV when PIG-902 is not solved. So we can let the Pig pick the right version, do the type cast. Otherwise, user have to do the explicit cast.",
+      "PIG-907: Provide multiple version of HashFNV (Piggybank)\n\ngit-svn-id: https://svn.apache.org/repos/asf/hadoop/pig/trunk@803377 13f79535-47bb-0310-9956-ffa450edef68"
+    ],
+    "relaxation_level": 0
+  }
+]
