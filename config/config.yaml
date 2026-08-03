@@ -1,0 +1,44 @@
+project: apache_pig
+
+llm:
+  generator:                      # one proprietary model, fixed across all six conditions
+    provider: openai
+    model: gpt-4o
+    temperature: 0.0
+  judge:                          # different family from the generator, to avoid self-enhancement bias
+    provider: anthropic
+    model: claude-sonnet-4-6
+    temperature: 0.0
+
+embedding:
+  provider: openai
+  model: text-embedding-3-small
+
+retrieval:
+  chunk_size: 500
+  chunk_overlap: 50
+  top_k: 8
+  rrf_k: 50
+
+data:
+  seoss_db: ./data/seoss33/pig.sqlite
+  repo_path: ./data/repos/pig
+  n_requirements: 20
+
+eval:
+  file_verifier:
+    commit_window_before: 2       # per Phase 2 contingency: REAL if present in any windowed commit
+    commit_window_after: 2
+  judge:
+    criteria: [actionability, completeness, project_specificity, granularity, clarity]
+  calibration:
+    n_pairs: 20
+    kappa_threshold: 0.6
+
+analysis:
+  alpha: 0.05
+  correction: holm_bonferroni       # family-wise error control across the four SQ1 tests
+
+tracking:
+  wandb_project: thesis-rag-decomposition
+  use_dvc: true

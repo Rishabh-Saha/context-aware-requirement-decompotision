@@ -1,0 +1,25 @@
+# Core
+pyyaml>=6.0
+pydantic>=2.7
+# Retrieval / RAG (proposal Section 9.2)
+langchain>=0.3
+langchain-text-splitters>=0.3
+chromadb>=0.5
+openai>=1.40
+anthropic>=0.39
+# Data / repo access
+gitpython>=3.1
+pydriller>=2.6
+# Analysis
+numpy>=1.26
+pandas>=2.2
+scipy>=1.13
+scikit-learn>=1.5
+matplotlib>=3.8
+seaborn>=0.13
+# Tracking
+wandb>=0.17
+dvc>=3.50
+# Dev
+pytest>=8.0
+jupyter>=1.0

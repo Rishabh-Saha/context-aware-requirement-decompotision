@@ -1,0 +1,21 @@
+You are comparing two candidate decompositions of the same software requirement.
+
+REQUIREMENT:
+{requirement}
+
+OUTPUT A:
+{output_a}
+
+OUTPUT B:
+{output_b}
+
+Compare A and B on each criterion below. For each, state whether A or B is better:
+- actionability: can a developer start work directly from the stories?
+- completeness: are the requirement's aspects covered?
+- project_specificity: are references and details grounded in this project?
+- granularity: are stories sized sensibly, neither too broad nor trivial?
+- clarity: are stories and acceptance criteria unambiguous?
+
+Return only JSON:
+{{"actionability":"A|B","completeness":"A|B","project_specificity":"A|B",
+"granularity":"A|B","clarity":"A|B","winner":"A|B","rationale":"one sentence"}}
