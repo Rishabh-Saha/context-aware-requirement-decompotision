@@ -106,6 +106,7 @@ class SeossLoader:
         sql += " ORDER BY resolved_date"
         if limit:
             sql += f" LIMIT {int(limit)}"
+        print(f"SeossLoader.issues() query: {sql} with params {params}")
         return [self._issue(r) for r in self._conn.execute(sql, params)]
 
     def comments(self, issue_id: str) -> list[sqlite3.Row]:

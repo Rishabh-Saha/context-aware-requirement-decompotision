@@ -1,5 +1,15 @@
 [
   {
+    "_meta": {
+      "frozen_at": "2026-08-09T19:37:19.285434+00:00",
+      "db": "data/seoss33/pig.sqlite",
+      "repo": "data/repos/pig",
+      "target_n": 20,
+      "n_frozen": 20,
+      "n_resolved_to_local": 20
+    }
+  },
+  {
     "issue_key": "PIG-692",
     "title": "when running script file, automatically set up job name based on the file name",
     "description": "When running pig script from command like like this:\n\npig scriptfile\n\nright now default job name is used. it is convenient to have it automatically set up based on the script name.\n\n",
