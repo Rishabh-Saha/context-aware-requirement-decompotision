@@ -7,10 +7,10 @@ the script refuses to overwrite an existing frozen file unless --force is passed
 never be clobbered by accident.
 
 Usage:
-    python src/freeze_requirements.py                 # first freeze, or no-op if file exists
-    python src/freeze_requirements.py --check         # re-sample to a temp file and diff, no write
-    python src/freeze_requirements.py --force          # deliberately regenerate (overwrites)
-    python src/freeze_requirements.py --target-n 30    # different sample size
+    python scripts/freeze_requirements.py                 # first freeze, or no-op if file exists
+    python scripts/freeze_requirements.py --check         # re-sample to a temp file and diff, no write
+    python scripts/freeze_requirements.py --force          # deliberately regenerate (overwrites)
+    python scripts/freeze_requirements.py --target-n 30    # different sample size
 
 Run from the repo root with the venv active.
 """
@@ -24,7 +24,7 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Make the repo root importable when run as `python src/freeze_requirements.py`.
+# Make the repo root importable when run as `python scripts/freeze_requirements.py`.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data.commit_resolver import LocalCommitIndex  # noqa: E402

@@ -81,6 +81,8 @@ def past_tickets_chunks(loader: SeossLoader) -> list[Chunk]:
             context_type=ContextType.PAST_TICKETS,
             metadata={"issue_id": issue.issue_id},
         ))
+    print(f"Built {len(chunks)} past-ticket chunks from {len(issues)} issues")
+    print(chunks[:5])
     return chunks
 
 
@@ -106,6 +108,8 @@ def design_document_chunks(docs_dir: str | Path) -> list[Chunk]:
             context_type=ContextType.DESIGN_DOCS,
             metadata={"source": path.name},
         ))
+    print(f"Built {len(chunks)} design-document chunks")
+    print(chunks[:5])
     return chunks
 
 
@@ -131,6 +135,8 @@ def coding_convention_chunks(repo_path: str | Path) -> list[Chunk]:
             context_type=ContextType.CODING_CONVENTIONS,
             metadata={"source": str(path.relative_to(repo_path))},
         ))
+    print(f"Built {len(chunks)} coding-convention chunks")
+    print(chunks[:5])
     return chunks
 
 
@@ -250,4 +256,6 @@ def codebase_summary_chunks(
             context_type=ContextType.CODEBASE_SUMMARIES,
             metadata={"file_path": rel},
         ))
+    print(f"Built {len(chunks)} codebase-summary chunks")
+    print(chunks[:5])
     return chunks
