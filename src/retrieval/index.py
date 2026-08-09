@@ -113,6 +113,19 @@ class ContextIndex:
             where = type_filter
         return col.query(query_embeddings=[query_embedding], n_results=top_k, where=where)
 
+    def chunks_for_types(
+        self, active: tuple[ContextType, ...]
+    ) -> tuple[list[str], list[str], list[dict]]:
+        """(ids, documents, metadatas) for every chunk in the active context types. The lexical
+        channel has to score the same candidate pool the dense channel is restricted to, and the
+        fused list has to be re-checked against chunk metadata for self-exclusion, so both come
+        from this one filtered get(). Empty active returns nothing, like dense_query."""
+        if not active:
+            return [], [], []
+        col = self._ensure()
+        got = col.get(where={"context_type": {"$in": [c.value for c in active]}})
+        return got["ids"], got["documents"], got["metadatas"]
+
     def codebase_summary_coverage(self, total_files: int) -> tuple[int, int]:
         """(embedded_file_count, total_files): counts distinct file_path values already upserted
         under the codebase_summaries context type. Used to gate the full 120-generation run so
