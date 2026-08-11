@@ -1,17 +1,23 @@
 """Eyeball that hybrid retrieval behaves, against the sanity-built index.
 
-Runs one frozen requirement through hybrid_retrieve under full RAG and under each leave-one-out
-condition, and prints the retrieved chunk ids grouped by context type. What to look for:
-  - full_rag pulls from all populated context types
+Prototypes Option B (per-type retrieval): each active context type is retrieved independently with
+its own small budget, then the blocks are combined. hybrid_retrieve already does dense+lexical RRF
+within a single type when called with a one-type `active` tuple, so Option B is just calling it
+once per active type and concatenating. This is the fastest way to confirm the fix before changing
+hybrid.py for real.
+
+What to look for:
+  - full_rag now shows ~2 of EACH populated type, not all past_tickets
   - each leave-one-out is missing exactly its dropped type
   - the requirement's own issue id and its containment sub-tasks never appear
 
-Note: codebase_summaries is only partially populated in the sanity build, so the
-full_rag_minus_codebase_summaries contrast may look small until the full summary pass is run.
+Note: codebase_summaries is only partially populated in the sanity build, so it may return fewer
+than the budget until the full summary pass is run.
 
 Usage:
     python scripts/sanity_retrieve.py                 # first frozen requirement
     python scripts/sanity_retrieve.py --issue PIG-704
+    python scripts/sanity_retrieve.py --per-type 2    # budget per context type
 """
 
 from __future__ import annotations
@@ -52,7 +58,7 @@ def main() -> int:
     p.add_argument("--repo", default=DEFAULT_REPO)
     p.add_argument("--frozen", default=DEFAULT_FROZEN)
     p.add_argument("--issue", default=None, help="issue_key to test (default: first frozen)")
-    p.add_argument("--top-k", type=int, default=8)
+    p.add_argument("--per-type", type=int, default=2, help="budget per context type (Option B)")
     args = p.parse_args()
 
     reqs = load_requirements(args.frozen)
@@ -77,11 +83,14 @@ def main() -> int:
 
     for cond in CONDITIONS:
         active = active_contexts(cond)
-        hits = hybrid_retrieve(
-            query, active, index, top_k=args.top_k,
-            exclude_issue_id=req["issue_key"],
-            exclude_issue_ids=excluded - {req["issue_key"]},
-        )
+        # Option B: retrieve each active type independently with its own budget, then combine.
+        hits: list[str] = []
+        for t in active:
+            hits += hybrid_retrieve(
+                query, (t,), index, top_k=args.per_type,
+                exclude_issue_id=req["issue_key"],
+                exclude_issue_ids=excluded - {req["issue_key"]},
+            )
         by_type: dict[str, int] = {}
         leaked = []
         for cid in hits:
