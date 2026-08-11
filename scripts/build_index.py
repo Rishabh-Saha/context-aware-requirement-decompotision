@@ -39,6 +39,8 @@ from src.retrieval.sources import (  # noqa: E402
     past_tickets_chunks,
     pending_summary_files,
 )
+from dotenv import load_dotenv
+load_dotenv()
 
 DEFAULT_DB = "data/seoss33/pig.sqlite"
 DEFAULT_REPO = "data/repos/pig"
