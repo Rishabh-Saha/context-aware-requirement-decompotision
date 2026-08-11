@@ -10,3 +10,7 @@ outputs/
 .pytest_cache/
 .ipynb_checkpoints/
 .DS_Store
+
+/data/
+!/data/frozen/
+!/data/frozen/*.json
