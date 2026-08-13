@@ -1,6 +1,14 @@
 """Hybrid retrieval (proposal Section 7.2): dense (cosine over embeddings) plus lexical
-(token-overlap) candidate lists, fused with Reciprocal Rank Fusion, returning the top eight chunks
-per query. Ablation conditions are applied by restricting the active context types before fusion.
+(token-overlap) candidate lists, fused with Reciprocal Rank Fusion. Ablation conditions are applied
+by restricting the active context types before fusion.
+
+Two entry points. `hybrid_retrieve` is the original global top-k call, one fused pool across all
+active types. `retrieve_by_type` is what the pipeline actually runs (docs/DECISION_retrieval_budget
+.md, Option B): each active type is retrieved independently with its own small budget, so RRF fuses
+dense and lexical within a type rather than across types. The global pool let past_tickets, the type
+most similar to a Jira-shaped query, take every slot, which left three of the four leave-one-out
+arms removing nothing and made SQ1 unanswerable by construction. Per-type budgets keep every type
+represented and every ablation arm measurable.
 
 Self-exclusion is enforced on the fused result, not just on the dense channel. A requirement must
 never retrieve its own ticket, and must never retrieve the sub-tasks it contains either: those
@@ -21,6 +29,10 @@ from src.conditions import ContextType
 from src.retrieval.fusion import RRF_K, reciprocal_rank_fusion
 
 TOP_K = 8
+
+# Per-type retrieval budget (docs/DECISION_retrieval_budget.md, Option B). Four active types at two
+# chunks each keeps the original top-8 prompt size while guaranteeing every type is represented.
+PER_TYPE = 2
 
 
 def _tokenize(text: str) -> list[str]:
@@ -86,3 +98,49 @@ def hybrid_retrieve(
     fused = reciprocal_rank_fusion([dense_ids, lexical_ids], k=k)
     kept = [cid for cid in fused if issue_by_id.get(cid) not in excluded]
     return kept[:top_k]
+
+
+def retrieve_by_type(
+    query: str,
+    active: tuple[ContextType, ...],
+    index,
+    per_type: int = PER_TYPE,
+    k: int = RRF_K,
+    embed_fn=None,
+    exclude_issue_id: str | None = None,
+    exclude_issue_ids: Iterable[str] = (),
+) -> dict[ContextType, list[str]]:
+    """Chunk texts per active context type, at most `per_type` each, ready for build_prompt.
+
+    Each type is retrieved on its own: hybrid_retrieve called with a one-type tuple already does
+    dense+lexical RRF inside that type and applies the same self-exclusion, so per-type retrieval is
+    one call per type rather than a separate code path. A leave-one-out condition simply arrives
+    here with that type missing from `active`, and its block never gets built.
+
+    Types that retrieve nothing are left out of the result rather than mapped to an empty list, so
+    the prompt never carries an empty labelled section. Vanilla (empty `active`) returns {}.
+    """
+    if not active:
+        return {}
+
+    # One filtered read covers every type, so the id -> text lookup costs a single get() no matter
+    # how many types are active.
+    ids, documents, _ = index.chunks_for_types(active)
+    text_by_id = dict(zip(ids, documents))
+
+    out: dict[ContextType, list[str]] = {}
+    for ctype in active:
+        hit_ids = hybrid_retrieve(
+            query,
+            (ctype,),
+            index,
+            top_k=per_type,
+            k=k,
+            embed_fn=embed_fn,
+            exclude_issue_id=exclude_issue_id,
+            exclude_issue_ids=exclude_issue_ids,
+        )
+        texts = [text_by_id[cid] for cid in hit_ids if cid in text_by_id]
+        if texts:
+            out[ctype] = texts
+    return out

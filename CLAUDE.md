@@ -9,9 +9,9 @@ small objectives with genuine overdelivery, never large objectives left half-fin
 ## The experiment in one paragraph
 Twenty requirements are sampled from Apache Pig (SEOSS 33). Each runs under six conditions (vanilla,
 full RAG, and four leave-one-out variants that each drop one context type), giving 120 generations.
-Retrieval is hybrid (dense + lexical, fused with RRF, top 8), filtered per condition by context-type
-metadata. Every generation is a fixed JSON decomposition, scored by four layers: structural metrics,
-file-existence verification, pairwise LLM-judge ranking, and a researcher-calibrated kappa check.
+Retrieval is per-type (Option B): each context type retrieved independently, budget of 2 per type,
+RRF fusing dense+lexical within a type. NOT global top-k. See docs/DECISION_retrieval_budget.md.
+Do not revert to global top-k; it collapses three of four ablation arms. Every generation is a fixed JSON decomposition, scored by four layers: structural metrics, file-existence verification, pairwise LLM-judge ranking, and a researcher-calibrated kappa check.
 
 ## What is already implemented and tested (do not rewrite, match its style)
 - `src/schema.py` the fixed decomposition JSON contract. Everything reads this shape.
@@ -34,7 +34,8 @@ Run `pytest` before and after changes. All of the above is covered by tests in `
 
 ## What is scaffolded and needs wiring (this is the vibe-coding work)
 - `src/retrieval/index.py`, `src/retrieval/hybrid.py` ChromaDB build and dense+lexical+RRF wiring.
-- `src/pipeline/generate.py` retrieve -> build_prompt -> llm -> parse_decomposition.
+- `src/pipeline/generate.py` run_condition wired (retrieve_by_type -> build_prompt -> llm -> parse).
+- `src/retrieval/hybrid.py` retrieve_by_type (per-type Option B retrieval) implemented and tested.
 - `src/eval/judge.py` render `prompts/judge_pairwise.txt`, call the judge, parse per-criterion winners.
 - `src/eval/calibration.py` is ready; it just needs the researcher-vs-judge choice lists fed in.
 

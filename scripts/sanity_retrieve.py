@@ -1,10 +1,9 @@
 """Eyeball that hybrid retrieval behaves, against the sanity-built index.
 
-Prototypes Option B (per-type retrieval): each active context type is retrieved independently with
-its own small budget, then the blocks are combined. hybrid_retrieve already does dense+lexical RRF
-within a single type when called with a one-type `active` tuple, so Option B is just calling it
-once per active type and concatenating. This is the fastest way to confirm the fix before changing
-hybrid.py for real.
+Exercises Option B (per-type retrieval) through the real pipeline call, retrieve_by_type: each
+active context type is retrieved independently with its own budget, and dense+lexical RRF happens
+within a type. This script prototyped that behaviour before it landed in hybrid.py; it now calls
+the shipped function so the check cannot drift from what generate.py actually runs.
 
 What to look for:
   - full_rag now shows ~2 of EACH populated type, not all past_tickets
@@ -29,9 +28,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from dotenv import load_dotenv  # noqa: E402
+load_dotenv()   # the dense channel embeds the query, so OPENAI_API_KEY has to be present
+
 from src.conditions import Condition, active_contexts, ALL_CONTEXT_TYPES  # noqa: E402
 from src.data.seoss_loader import SeossLoader  # noqa: E402
-from src.retrieval.hybrid import hybrid_retrieve, self_exclusion_ids  # noqa: E402
+from src.retrieval.hybrid import PER_TYPE, retrieve_by_type, self_exclusion_ids  # noqa: E402
 from src.retrieval.index import ContextIndex  # noqa: E402
 
 DEFAULT_DB = "data/seoss33/pig.sqlite"
@@ -58,7 +60,7 @@ def main() -> int:
     p.add_argument("--repo", default=DEFAULT_REPO)
     p.add_argument("--frozen", default=DEFAULT_FROZEN)
     p.add_argument("--issue", default=None, help="issue_key to test (default: first frozen)")
-    p.add_argument("--per-type", type=int, default=2, help="budget per context type (Option B)")
+    p.add_argument("--per-type", type=int, default=PER_TYPE, help="budget per context type (Option B)")
     args = p.parse_args()
 
     reqs = load_requirements(args.frozen)
@@ -70,9 +72,8 @@ def main() -> int:
     query = f"{req['title']}\n{req['description']}"
     index = ContextIndex()
 
-    # id -> context_type / issue_id lookup, over all four types, for grouping and leak-checking.
+    # id -> issue_id lookup, over all four types, for the leak check.
     ids, _docs, metas = index.chunks_for_types(ALL_CONTEXT_TYPES)
-    ctype_of = {cid: m.get("context_type") for cid, m in zip(ids, metas)}
     issue_of = {cid: m.get("issue_id") for cid, m in zip(ids, metas)}
 
     with SeossLoader(args.db, args.repo) as loader:
@@ -83,26 +84,30 @@ def main() -> int:
 
     for cond in CONDITIONS:
         active = active_contexts(cond)
-        # Option B: retrieve each active type independently with its own budget, then combine.
-        hits: list[str] = []
-        for t in active:
-            hits += hybrid_retrieve(
-                query, (t,), index, top_k=args.per_type,
-                exclude_issue_id=req["issue_key"],
-                exclude_issue_ids=excluded - {req["issue_key"]},
-            )
+        retrieved = retrieve_by_type(
+            query, active, index, per_type=args.per_type,
+            exclude_issue_id=req["issue_key"],
+            exclude_issue_ids=excluded - {req["issue_key"]},
+        )
+        # retrieve_by_type returns chunk texts, so the leak check goes back through the id lookup by
+        # text to keep reporting which chunk was retrieved rather than just how many.
+        id_of_text = {doc: cid for cid, doc in zip(ids, _docs)}
         by_type: dict[str, int] = {}
         leaked = []
-        for cid in hits:
-            by_type[ctype_of.get(cid, "?")] = by_type.get(ctype_of.get(cid, "?"), 0) + 1
-            if issue_of.get(cid) in excluded:
-                leaked.append(cid)
+        n_hits = 0
+        for ctype, texts in retrieved.items():
+            by_type[ctype.value] = len(texts)
+            n_hits += len(texts)
+            for text in texts:
+                cid = id_of_text.get(text)
+                if cid is not None and issue_of.get(cid) in excluded:
+                    leaked.append(cid)
 
         dropped = (set(t.value for t in ALL_CONTEXT_TYPES)
                    - set(t.value for t in active)) or {"(none)"}
         print(f"{cond.value}")
         print(f"  dropped type : {', '.join(sorted(dropped))}")
-        print(f"  retrieved    : {by_type or '{}'} ({len(hits)} chunks)")
+        print(f"  retrieved    : {by_type or '{}'} ({n_hits} chunks)")
         print(f"  leak check   : {'LEAK ' + str(leaked) if leaked else 'clean'}\n")
 
     return 0
