@@ -30,14 +30,18 @@ Do not revert to global top-k; it collapses three of four ablation arms. Every g
   `apache/pig` clone even though every commit is present under a different hash. Do not try to "fix"
   this by re-cloning. Resolution is by message subject + author + date, and may return several local
   hashes; Layer 2 spans all of them via `FileVerifier.from_anchors`.
+- `src/retrieval/index.py` ChromaDB build + dense_query with metadata filter and self-exclusion.
+- `src/retrieval/hybrid.py` dense+lexical RRF, and retrieve_by_type (per-type Option B, budget 2).
+- `src/pipeline/generate.py` run_condition wired (retrieve_by_type -> build_prompt -> llm -> parse).
 Run `pytest` before and after changes. All of the above is covered by tests in `tests/`.
 
 ## What is scaffolded and needs wiring (this is the vibe-coding work)
-- `src/retrieval/index.py`, `src/retrieval/hybrid.py` ChromaDB build and dense+lexical+RRF wiring.
-- `src/pipeline/generate.py` run_condition wired (retrieve_by_type -> build_prompt -> llm -> parse).
-- `src/retrieval/hybrid.py` retrieve_by_type (per-type Option B retrieval) implemented and tested.
+- Full codebase-summaries pass: `python scripts/build_index.py --confirm-summaries` (all ~1088
+  main-source files). Required before any real 120-run; the run is gated on
+  assert_codebase_summaries_complete().
 - `src/eval/judge.py` render `prompts/judge_pairwise.txt`, call the judge, parse per-criterion winners.
 - `src/eval/calibration.py` is ready; it just needs the researcher-vs-judge choice lists fed in.
+- Experiment runner that logs every layer to W&B / DVC.
 
 ## Sampling criteria (decided from profiling the Pig dump, do not weaken)
 - Candidate pool: type in (New Feature, Improvement), `resolution = 'Fixed'` (the loose
@@ -72,9 +76,11 @@ Natural and plain. No em dashes, no first-person pronouns in formal text, contra
 Explain the reasoning, not just the what.
 
 ## Build order (follows the twelve-week plan)
-1. DONE: `seoss_loader` + `sampling` are wired to the confirmed schema and tested. Next, run
-   sample_requirements against the real db to freeze the twenty requirements and archive them.
-2. Build the four context indexes (`index.py`) and complete hybrid retrieval (`hybrid.py`).
-3. Complete `generate.py` and run the six conditions on the sanity-check requirements first.
-4. Wire the judge (`judge.py`); Layers 1, 2, and the stats are ready to consume outputs.
-5. Add the experiment runner that logs every layer to W&B / DVC.
+1. DONE: data layer (loader, sampling, commit resolver); 20 requirements frozen.
+2. DONE: four context indexes + hybrid retrieval (Option B, per-type budget 2).
+3. DONE: `generate.py` run_condition; verified end-to-end on the sanity requirements
+   (retrieve -> generate -> parse -> Layer 2 correctly flags hallucinated files).
+4. NEXT: full codebase-summaries pass (build_index --confirm-summaries), then it's valid to run
+   all six conditions across the 20 frozen requirements (120 generations).
+5. Wire the judge (`judge.py`); Layers 1, 2, and the stats are ready to consume outputs.
+6. Add the experiment runner that logs every layer to W&B / DVC.
