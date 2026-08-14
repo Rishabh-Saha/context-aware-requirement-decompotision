@@ -66,9 +66,17 @@ def build_condition_prompt(requirement, condition: Condition, index, loader, per
 
 
 def run_condition(
-    requirement, condition: Condition, index, loader, llm, per_type: int = PER_TYPE
+    requirement, condition: Condition, index, loader, llm, per_type: int = PER_TYPE,
+    prompt: str | None = None,
 ) -> Decomposition:
-    """Retrieve per active context type, assemble the prompt, generate, and validate the result."""
-    prompt = build_condition_prompt(requirement, condition, index, loader, per_type=per_type)
+    """Retrieve per active context type, assemble the prompt, generate, and validate the result.
+
+    `prompt` lets a caller that has already assembled the prompt pass it straight through, which
+    the experiment runner needs: it archives the prompt alongside each generation, and retrieving
+    twice would both waste an embedding call per active type and leave room for the archived prompt
+    to differ from the one actually sent. When omitted, the prompt is assembled here as usual.
+    """
+    if prompt is None:
+        prompt = build_condition_prompt(requirement, condition, index, loader, per_type=per_type)
     response = llm.complete(prompt, system=system_prompt())
     return parse_decomposition(response.text)
