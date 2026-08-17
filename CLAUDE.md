@@ -33,14 +33,21 @@ Do not revert to global top-k; it collapses three of four ablation arms. Every g
 - `src/retrieval/index.py` ChromaDB build + dense_query with metadata filter and self-exclusion.
 - `src/retrieval/hybrid.py` dense+lexical RRF, and retrieve_by_type (per-type Option B, budget 2).
 - `src/pipeline/generate.py` run_condition wired (retrieve_by_type -> build_prompt -> llm -> parse).
+- `src/eval/rendering.py` how a comparison side is shown to any rater. Shared by the judge and the
+  Layer 4 sheet on purpose, so the researcher provably scores the same text the judge scored.
+- `scripts/build_calibration_set.py` + `scripts/score_calibration.py` Layer 4: stratified blinded
+  sample, hidden key, Cohen's kappa in sheet-position space, gate at 0.6 on the overall winner.
+- `src/eval/judge.py` + `scripts/run_judge.py` Layer 3: renders judge_pairwise.txt, judges both
+  presentation orders, reconciles per criterion and overall, writes judgments{,_raw}.jsonl. The
+  judge is condition-blind (A/B only) and refuses to run from the generator's provider family.
 Run `pytest` before and after changes. All of the above is covered by tests in `tests/`.
 
 ## What is scaffolded and needs wiring (this is the vibe-coding work)
 - Full codebase-summaries pass: `python scripts/build_index.py --confirm-summaries` (all ~1088
   main-source files). Required before any real 120-run; the run is gated on
   assert_codebase_summaries_complete().
-- `src/eval/judge.py` render `prompts/judge_pairwise.txt`, call the judge, parse per-criterion winners.
-- `src/eval/calibration.py` is ready; it just needs the researcher-vs-judge choice lists fed in.
+- Layer 4 rating: `data/runs/<run>/calibration/` holds a blinded sheet awaiting researcher ratings.
+  Fill `calibration_ratings.csv`, then `python scripts/score_calibration.py --run-id <run>`.
 - Experiment runner that logs every layer to W&B / DVC.
 
 ## Sampling criteria (decided from profiling the Pig dump, do not weaken)
@@ -82,5 +89,7 @@ Explain the reasoning, not just the what.
    (retrieve -> generate -> parse -> Layer 2 correctly flags hallucinated files).
 4. NEXT: full codebase-summaries pass (build_index --confirm-summaries), then it's valid to run
    all six conditions across the 20 frozen requirements (120 generations).
-5. Wire the judge (`judge.py`); Layers 1, 2, and the stats are ready to consume outputs.
+5. DONE: the judge (`scripts/run_judge.py --run-id <generation run>`), 140/140 on run
+   20260814T033139Z. Layer 4 sheet is built and awaiting ratings. No win-rate or Bradley-Terry
+   aggregation over judgments.jsonl exists yet.
 6. Add the experiment runner that logs every layer to W&B / DVC.
