@@ -16,6 +16,11 @@ Compare A and B on each criterion below. For each, state whether A or B is bette
 - granularity: are stories sized sensibly, neither too broad nor trivial?
 - clarity: are stories and acceptance criteria unambiguous?
 
-Return only JSON:
-{{"actionability":"A|B","completeness":"A|B","project_specificity":"A|B",
-"granularity":"A|B","clarity":"A|B","winner":"A|B","rationale":"one sentence"}}
+Every choice must be exactly "A" or "B". Ties are not permitted: choose the better option even when
+the margin is small.
+
+Return only a JSON object, with these keys and no others:
+  actionability, completeness, project_specificity, granularity, clarity, winner
+      each valued "A" or "B"
+  rationale
+      one sentence
