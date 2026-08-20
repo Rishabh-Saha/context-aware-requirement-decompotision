@@ -22,7 +22,7 @@ different model family (cross-family enforced in code).
 - SQ1: no leave-one-out significantly distinguished from full RAG.
 - SQ3: full RAG 19/19 and vanilla 18/18 preferred over the human reference (p < 0.001), read as a
   format effect rather than substance.
-- Positional inconsistency: 21/140 = 15.4%.
+- Positional inconsistency: 21/140 = 15%.
 
 ## Layer 4 (calibration gate)
 - Overall Cohen's kappa = 0.56 (n = 19, 95% CI 0.19-0.94, raw agreement 0.84), below the 0.60 gate.
