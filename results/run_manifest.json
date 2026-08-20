@@ -6,6 +6,28 @@
     "model": "gpt-4o",
     "temperature": 0.0
   },
+  "judge": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "temperature": 0.0,
+    "judge_started_at": "2026-08-16T16:15:26.413895+00:00"
+  },
+  "embedding": {
+    "provider": "openai",
+    "model": "text-embedding-3-small"
+  },
+  "retrieval": {
+    "chunk_size": 500,
+    "chunk_overlap": 50,
+    "top_k": 8,
+    "rrf_k": 50
+  },
+  "prompt_sha256": {
+    "prompts/decomposition_system.txt": "573457561a159eb165d6f36234327b8fc4c7f862831706a27e53bd72900d725",
+    "prompts/judge_pairwise.txt": "3e10eb5a92f2738282647d9e015beb17824c2fb4248873ca2b0f5da4422a3af",
+    "_note": "judge_pairwise.txt hash is the current file content (the recovery-pass template, sha256_12 3e10eb5a92f2). 272 of 280 ordered judgements were produced under the prior template (sha256_12 b4497f7e4087, output-format instruction only); see prompt_revisions.json in the judge run directory."
+  },
+  "code_commit": "fe1809526cacfb654055df0f6d2ad9058f244949",
   "summaries_incomplete": false,
   "conditions": [
     "vanilla",
