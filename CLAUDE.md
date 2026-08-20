@@ -42,13 +42,15 @@ Do not revert to global top-k; it collapses three of four ablation arms. Every g
   judge is condition-blind (A/B only) and refuses to run from the generator's provider family.
 Run `pytest` before and after changes. All of the above is covered by tests in `tests/`.
 
-## What is scaffolded and needs wiring (this is the vibe-coding work)
-- Full codebase-summaries pass: `python scripts/build_index.py --confirm-summaries` (all ~1088
-  main-source files). Required before any real 120-run; the run is gated on
-  assert_codebase_summaries_complete().
-- Layer 4 rating: `data/runs/<run>/calibration/` holds a blinded sheet awaiting researcher ratings.
-  Fill `calibration_ratings.csv`, then `python scripts/score_calibration.py --run-id <run>`.
-- Experiment runner that logs every layer to W&B / DVC.
+## Status: the experiment is complete
+The full experiment has been run and analysed on run 20260814T033139Z. All pipeline stages are
+implemented and executed; see the Results section below for the final numbers. What remains is
+optional tooling only:
+- Optional: W&B / DVC logging of the runner (the runner itself exists and writes per-layer output).
+- Optional: a scripted win-rate / aggregation report over judgments.jsonl (the numbers were computed
+  during analysis; a committed script would make regeneration one command).
+The codebase-summaries pass is complete (1088/1088 main-source files embedded), and Layer 4
+calibration has been rated and scored (see below), so neither is outstanding.
 
 ## Sampling criteria (decided from profiling the Pig dump, do not weaken)
 - Candidate pool: type in (New Feature, Improvement), `resolution = 'Fixed'` (the loose
@@ -87,9 +89,10 @@ Explain the reasoning, not just the what.
 2. DONE: four context indexes + hybrid retrieval (Option B, per-type budget 2).
 3. DONE: `generate.py` run_condition; verified end-to-end on the sanity requirements
    (retrieve -> generate -> parse -> Layer 2 correctly flags hallucinated files).
-4. NEXT: full codebase-summaries pass (build_index --confirm-summaries), then it's valid to run
-   all six conditions across the 20 frozen requirements (120 generations).
-5. DONE: the judge (`scripts/run_judge.py --run-id <generation run>`), 140/140 on run
-   20260814T033139Z. Layer 4 sheet is built and awaiting ratings. No win-rate or Bradley-Terry
-   aggregation over judgments.jsonl exists yet.
-6. Add the experiment runner that logs every layer to W&B / DVC.
+4. DONE: full codebase-summaries pass (1088/1088), then the six conditions across the 20 frozen
+   requirements (120 generations) on run 20260814T033139Z. Layers 1 and 2 computed per cell.
+5. DONE: the judge (`scripts/run_judge.py`), 140/140 reconciled on run 20260814T033139Z.
+6. DONE: Layer 4 calibration rated and scored. Overall Cohen's kappa = 0.56 (n=19), below the 0.60
+   gate, so Layer 3 is reported descriptively and Layers 1-2 carry the primary conclusions (the
+   pre-registered contingency). See docs/DECISION_LAYER4_calibration.md.
+7. Optional: W&B / DVC logging; a committed aggregation script over judgments.jsonl.

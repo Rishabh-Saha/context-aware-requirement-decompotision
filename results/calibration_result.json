@@ -1,0 +1,250 @@
+{
+  "generation_run_id": "20260814T033139Z",
+  "threshold": 0.6,
+  "gate_metric": "overall winner",
+  "layer3_validated": false,
+  "overall": {
+    "kappa": 0.5649,
+    "n": 19,
+    "ci95": [
+      0.1881,
+      0.9417
+    ],
+    "threshold": 0.6,
+    "layer3_validated": false,
+    "usable": true,
+    "raw_agreement": 0.8421
+  },
+  "pooled_criteria": {
+    "kappa": 0.6,
+    "n": 72,
+    "ci95": [
+      0.3848,
+      0.8152
+    ],
+    "threshold": 0.6,
+    "layer3_validated": true,
+    "usable": true,
+    "raw_agreement": 0.8333
+  },
+  "per_criterion": {
+    "actionability": {
+      "kappa": 0.6735,
+      "n": 16,
+      "ci95": [
+        0.1772,
+        1.0
+      ],
+      "threshold": 0.6,
+      "layer3_validated": true,
+      "usable": true,
+      "raw_agreement": 0.875
+    },
+    "completeness": {
+      "kappa": 0.6129,
+      "n": 16,
+      "ci95": [
+        0.1188,
+        1.0
+      ],
+      "threshold": 0.6,
+      "layer3_validated": true,
+      "usable": true,
+      "raw_agreement": 0.8125
+    },
+    "project_specificity": {
+      "kappa": 0.56,
+      "n": 11,
+      "ci95": [
+        0.042,
+        1.0
+      ],
+      "threshold": 0.6,
+      "layer3_validated": false,
+      "usable": true,
+      "raw_agreement": 0.8182
+    },
+    "granularity": {
+      "kappa": 0.3171,
+      "n": 14,
+      "ci95": [
+        -0.0294,
+        0.6636
+      ],
+      "threshold": 0.6,
+      "layer3_validated": false,
+      "usable": true,
+      "raw_agreement": 0.7143
+    },
+    "clarity": {
+      "kappa": 0.8148,
+      "n": 15,
+      "ci95": [
+        0.1331,
+        1.0
+      ],
+      "threshold": 0.6,
+      "layer3_validated": true,
+      "usable": true,
+      "raw_agreement": 0.9333
+    }
+  },
+  "n_pairs_in_key": 20,
+  "n_pairs_rated_overall": 19,
+  "overall_pairs": [
+    {
+      "pair_id": "pair_01",
+      "researcher_position": "B",
+      "researcher_side": "full_rag",
+      "judge_position": "B",
+      "judge_side": "full_rag",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_02",
+      "researcher_position": "B",
+      "researcher_side": "full_rag_minus_codebase_summaries",
+      "judge_position": "B",
+      "judge_side": "full_rag_minus_codebase_summaries",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_03",
+      "researcher_position": "B",
+      "researcher_side": "vanilla",
+      "judge_position": "A",
+      "judge_side": "full_rag",
+      "agreed": false
+    },
+    {
+      "pair_id": "pair_04",
+      "researcher_position": "A",
+      "researcher_side": "full_rag",
+      "judge_position": "A",
+      "judge_side": "full_rag",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_05",
+      "researcher_position": "B",
+      "researcher_side": "full_rag",
+      "judge_position": "B",
+      "judge_side": "full_rag",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_06",
+      "researcher_position": "B",
+      "researcher_side": "full_rag_minus_codebase_summaries",
+      "judge_position": "A",
+      "judge_side": "full_rag",
+      "agreed": false
+    },
+    {
+      "pair_id": "pair_07",
+      "researcher_position": "A",
+      "researcher_side": "full_rag",
+      "judge_position": "A",
+      "judge_side": "full_rag",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_08",
+      "researcher_position": "B",
+      "researcher_side": "vanilla",
+      "judge_position": "B",
+      "judge_side": "vanilla",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_09",
+      "researcher_position": "A",
+      "researcher_side": "vanilla",
+      "judge_position": "A",
+      "judge_side": "vanilla",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_10",
+      "researcher_position": "B",
+      "researcher_side": "full_rag",
+      "judge_position": "B",
+      "judge_side": "full_rag",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_11",
+      "researcher_position": "B",
+      "researcher_side": "full_rag",
+      "judge_position": "B",
+      "judge_side": "full_rag",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_12",
+      "researcher_position": "B",
+      "researcher_side": "full_rag_minus_codebase_summaries",
+      "judge_position": "B",
+      "judge_side": "full_rag_minus_codebase_summaries",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_14",
+      "researcher_position": "A",
+      "researcher_side": "full_rag_minus_design_documents",
+      "judge_position": "B",
+      "judge_side": "full_rag",
+      "agreed": false
+    },
+    {
+      "pair_id": "pair_15",
+      "researcher_position": "B",
+      "researcher_side": "full_rag",
+      "judge_position": "B",
+      "judge_side": "full_rag",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_16",
+      "researcher_position": "B",
+      "researcher_side": "full_rag",
+      "judge_position": "B",
+      "judge_side": "full_rag",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_17",
+      "researcher_position": "B",
+      "researcher_side": "vanilla",
+      "judge_position": "B",
+      "judge_side": "vanilla",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_18",
+      "researcher_position": "B",
+      "researcher_side": "full_rag",
+      "judge_position": "B",
+      "judge_side": "full_rag",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_19",
+      "researcher_position": "B",
+      "researcher_side": "full_rag_minus_past_tickets",
+      "judge_position": "B",
+      "judge_side": "full_rag_minus_past_tickets",
+      "agreed": true
+    },
+    {
+      "pair_id": "pair_20",
+      "researcher_position": "B",
+      "researcher_side": "full_rag",
+      "judge_position": "B",
+      "judge_side": "full_rag",
+      "agreed": true
+    }
+  ],
+  "unrated_pairs": [],
+  "notes": "Researcher answers were translated from sheet positions into side names via key.json before comparison. Cells were dropped, never imputed, where a rating was blank or the judge's reconciled winner was null; each kappa reports its own n."
+}

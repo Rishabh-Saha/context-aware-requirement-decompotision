@@ -1,0 +1,52 @@
+{
+  "judge_started_at": "2026-08-16T16:15:26.413895+00:00",
+  "generation_run_id": "20260814T033139Z",
+  "generator": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "temperature": 0.0
+  },
+  "judge": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "temperature": 0.0
+  },
+  "criteria": [
+    "actionability",
+    "completeness",
+    "project_specificity",
+    "granularity",
+    "clarity"
+  ],
+  "prompt_file": "prompts/judge_pairwise.txt",
+  "prompt_sha256": "3e10eb5a92f2",
+  "requirements": [
+    "PIG-692",
+    "PIG-704",
+    "PIG-713",
+    "PIG-745",
+    "PIG-712",
+    "PIG-732",
+    "PIG-627",
+    "PIG-795",
+    "PIG-741",
+    "PIG-626",
+    "PIG-781",
+    "PIG-830",
+    "PIG-753",
+    "PIG-832",
+    "PIG-868",
+    "PIG-820",
+    "PIG-792",
+    "PIG-885",
+    "PIG-893",
+    "PIG-907"
+  ],
+  "n_requirements": 20,
+  "comparison_types_per_requirement": 7,
+  "n_comparisons": 140,
+  "n_ordered_judgements": 280,
+  "limit": null,
+  "blind": true,
+  "notes": "Both presentation orders are judged and reconciled; winner is null where they disagree. The judge prompt carries only OUTPUT A and OUTPUT B, with no condition or reference labels. Known limitation: in the SQ3 comparisons the reference side is human prose and the model side is a generated decomposition, so a common plain-text renderer, plus the scrubbing of commit trailers and issue-key subject prefixes, reduces but cannot remove the difference between them."
+}

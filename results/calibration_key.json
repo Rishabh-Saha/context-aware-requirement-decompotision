@@ -1,0 +1,362 @@
+{
+  "pair_01": {
+    "pair_id": "pair_01",
+    "issue_key": "PIG-692",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_design_documents",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag_minus_design_documents",
+    "sheet_b": "full_rag",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag",
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_02": {
+    "pair_id": "pair_02",
+    "issue_key": "PIG-832",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_codebase_summaries",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag",
+    "sheet_b": "full_rag_minus_codebase_summaries",
+    "judge_winner": "full_rag_minus_codebase_summaries",
+    "judge_per_criterion": {
+      "actionability": "full_rag_minus_codebase_summaries",
+      "completeness": "full_rag_minus_codebase_summaries",
+      "project_specificity": "full_rag_minus_codebase_summaries",
+      "granularity": "full_rag_minus_codebase_summaries",
+      "clarity": "full_rag_minus_codebase_summaries"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_03": {
+    "pair_id": "pair_03",
+    "issue_key": "PIG-832",
+    "sub_question": "SQ2",
+    "comparison_left": "vanilla",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag",
+    "sheet_b": "vanilla",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag",
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_04": {
+    "pair_id": "pair_04",
+    "issue_key": "PIG-907",
+    "sub_question": "SQ3",
+    "comparison_left": "full_rag",
+    "comparison_right": "reference",
+    "sheet_a": "full_rag",
+    "sheet_b": "reference",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag",
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_05": {
+    "pair_id": "pair_05",
+    "issue_key": "PIG-741",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_design_documents",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag_minus_design_documents",
+    "sheet_b": "full_rag",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": null,
+      "project_specificity": "full_rag",
+      "granularity": null,
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_06": {
+    "pair_id": "pair_06",
+    "issue_key": "PIG-713",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_codebase_summaries",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag",
+    "sheet_b": "full_rag_minus_codebase_summaries",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": null,
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_07": {
+    "pair_id": "pair_07",
+    "issue_key": "PIG-692",
+    "sub_question": "SQ2",
+    "comparison_left": "vanilla",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag",
+    "sheet_b": "vanilla",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag",
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_08": {
+    "pair_id": "pair_08",
+    "issue_key": "PIG-893",
+    "sub_question": "SQ3",
+    "comparison_left": "vanilla",
+    "comparison_right": "reference",
+    "sheet_a": "reference",
+    "sheet_b": "vanilla",
+    "judge_winner": "vanilla",
+    "judge_per_criterion": {
+      "actionability": "vanilla",
+      "completeness": "vanilla",
+      "project_specificity": "vanilla",
+      "granularity": "vanilla",
+      "clarity": "vanilla"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_09": {
+    "pair_id": "pair_09",
+    "issue_key": "PIG-820",
+    "sub_question": "SQ3",
+    "comparison_left": "vanilla",
+    "comparison_right": "reference",
+    "sheet_a": "vanilla",
+    "sheet_b": "reference",
+    "judge_winner": "vanilla",
+    "judge_per_criterion": {
+      "actionability": "vanilla",
+      "completeness": "vanilla",
+      "project_specificity": "vanilla",
+      "granularity": "vanilla",
+      "clarity": "vanilla"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_10": {
+    "pair_id": "pair_10",
+    "issue_key": "PIG-626",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_codebase_summaries",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag_minus_codebase_summaries",
+    "sheet_b": "full_rag",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag",
+      "project_specificity": "full_rag",
+      "granularity": null,
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_11": {
+    "pair_id": "pair_11",
+    "issue_key": "PIG-795",
+    "sub_question": "SQ3",
+    "comparison_left": "full_rag",
+    "comparison_right": "reference",
+    "sheet_a": "reference",
+    "sheet_b": "full_rag",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag",
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_12": {
+    "pair_id": "pair_12",
+    "issue_key": "PIG-820",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_codebase_summaries",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag",
+    "sheet_b": "full_rag_minus_codebase_summaries",
+    "judge_winner": "full_rag_minus_codebase_summaries",
+    "judge_per_criterion": {
+      "actionability": null,
+      "completeness": "full_rag_minus_codebase_summaries",
+      "project_specificity": null,
+      "granularity": null,
+      "clarity": "full_rag_minus_codebase_summaries"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_13": {
+    "pair_id": "pair_13",
+    "issue_key": "PIG-745",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_codebase_summaries",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag",
+    "sheet_b": "full_rag_minus_codebase_summaries",
+    "judge_winner": "full_rag_minus_codebase_summaries",
+    "judge_per_criterion": {
+      "actionability": "full_rag_minus_codebase_summaries",
+      "completeness": "full_rag_minus_codebase_summaries",
+      "project_specificity": "full_rag_minus_codebase_summaries",
+      "granularity": "full_rag_minus_codebase_summaries",
+      "clarity": "full_rag_minus_codebase_summaries"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_14": {
+    "pair_id": "pair_14",
+    "issue_key": "PIG-704",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_design_documents",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag_minus_design_documents",
+    "sheet_b": "full_rag",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag_minus_design_documents",
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_15": {
+    "pair_id": "pair_15",
+    "issue_key": "PIG-713",
+    "sub_question": "SQ3",
+    "comparison_left": "full_rag",
+    "comparison_right": "reference",
+    "sheet_a": "reference",
+    "sheet_b": "full_rag",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag",
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_16": {
+    "pair_id": "pair_16",
+    "issue_key": "PIG-907",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_design_documents",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag_minus_design_documents",
+    "sheet_b": "full_rag",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag",
+      "project_specificity": null,
+      "granularity": null,
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_17": {
+    "pair_id": "pair_17",
+    "issue_key": "PIG-885",
+    "sub_question": "SQ2",
+    "comparison_left": "vanilla",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag",
+    "sheet_b": "vanilla",
+    "judge_winner": "vanilla",
+    "judge_per_criterion": {
+      "actionability": "vanilla",
+      "completeness": null,
+      "project_specificity": "vanilla",
+      "granularity": "vanilla",
+      "clarity": "vanilla"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_18": {
+    "pair_id": "pair_18",
+    "issue_key": "PIG-692",
+    "sub_question": "SQ3",
+    "comparison_left": "full_rag",
+    "comparison_right": "reference",
+    "sheet_a": "reference",
+    "sheet_b": "full_rag",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag",
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_19": {
+    "pair_id": "pair_19",
+    "issue_key": "PIG-712",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_past_tickets",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag",
+    "sheet_b": "full_rag_minus_past_tickets",
+    "judge_winner": "full_rag_minus_past_tickets",
+    "judge_per_criterion": {
+      "actionability": "full_rag_minus_past_tickets",
+      "completeness": "full_rag_minus_past_tickets",
+      "project_specificity": null,
+      "granularity": null,
+      "clarity": "full_rag_minus_past_tickets"
+    },
+    "judge_positional_inconsistent": false
+  },
+  "pair_20": {
+    "pair_id": "pair_20",
+    "issue_key": "PIG-830",
+    "sub_question": "SQ1",
+    "comparison_left": "full_rag_minus_past_tickets",
+    "comparison_right": "full_rag",
+    "sheet_a": "full_rag_minus_past_tickets",
+    "sheet_b": "full_rag",
+    "judge_winner": "full_rag",
+    "judge_per_criterion": {
+      "actionability": "full_rag",
+      "completeness": "full_rag_minus_past_tickets",
+      "project_specificity": "full_rag",
+      "granularity": "full_rag",
+      "clarity": "full_rag"
+    },
+    "judge_positional_inconsistent": false
+  }
+}

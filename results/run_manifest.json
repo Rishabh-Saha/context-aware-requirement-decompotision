@@ -1,0 +1,56 @@
+{
+  "run_id": "20260814T033139Z",
+  "started_at": "2026-08-14T03:31:43.467599+00:00",
+  "generator": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "temperature": 0.0
+  },
+  "summaries_incomplete": false,
+  "conditions": [
+    "vanilla",
+    "full_rag",
+    "full_rag_minus_past_tickets",
+    "full_rag_minus_design_documents",
+    "full_rag_minus_coding_conventions",
+    "full_rag_minus_codebase_summaries"
+  ],
+  "requirements": [
+    "PIG-692",
+    "PIG-704",
+    "PIG-713",
+    "PIG-745",
+    "PIG-712",
+    "PIG-732",
+    "PIG-627",
+    "PIG-795",
+    "PIG-741",
+    "PIG-626",
+    "PIG-781",
+    "PIG-830",
+    "PIG-753",
+    "PIG-832",
+    "PIG-868",
+    "PIG-820",
+    "PIG-792",
+    "PIG-885",
+    "PIG-893",
+    "PIG-907"
+  ],
+  "n_requirements": 20,
+  "n_cells": 120,
+  "limit": null,
+  "per_type": 2,
+  "commit_window": {
+    "before": 2,
+    "after": 2
+  },
+  "paths": {
+    "config": "config/config.yaml",
+    "db": "data/seoss33/pig.sqlite",
+    "repo": "data/repos/pig",
+    "frozen": "data/frozen/requirements.json",
+    "persist_dir": "./data/chroma",
+    "collection": "seoss_pig"
+  }
+}
