@@ -436,7 +436,7 @@ Ordered by value per unit of risk. "Lines" is net removal, ignoring any new shar
 | 4 | ~~Single-source `RATING_COLUMNS`/`OVERALL` into `src/eval/calibration.py`, plus the test edit~~ **DONE** | 4 | 6 | **medium** |
 | 5 | ~~Single-source the cell filename: one `cell_stem(issue_key, condition)` used by both the writer and `rendering.load_decomposition`~~ **DONE**, verified against all 120 archived cells | 2 | 4 | **low** |
 | 6 | ~~Delete `distinct_types()` and `distinct_statuses()` only~~ **DONE**; `meta()` and `commit_for_issue()` kept, both documented in CODEBASE_GUIDE.md | 1 | 8 | **low** |
-| 7 | Collapse `aggregate_results`'s four one-line loaders and `table_4_5_layer4` into `main` | 1 | ~16 | **low** |
+| 7 | ~~Collapse `aggregate_results`'s four one-line loaders and `table_4_5_layer4` into `main`~~ **DONE** | 1 | 16 | **low** |
 | 8 | Move `append_jsonl`, `frozen_requirements` and the client factory into `src/utils/` and `src/llm/`; delete the five/two/two copies | 7 | ~70 | **medium** |
 | 9 | ~~One order-preserving `dedupe()` in `src/utils/`~~ **DONE**, **four** copy sites not three | 3 | 14 | **low** |
 | 10 | ~~Share script defaults from one `src/paths.py`~~ **DONE**, 14 constants, 8 scripts plus 3 sites in `src/` | 11 | 30 | **low** |
