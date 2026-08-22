@@ -55,17 +55,17 @@ class SeossLoader:
         self._conn = sqlite3.connect(str(self.db_path))
         self._conn.row_factory = sqlite3.Row
 
-    # -- introspection helpers (handy for confirming values before filtering) --
+    # -- provenance --
+    # The meta table holds the crawl timestamp and the source Jira/git URLs (CODEBASE_GUIDE.md).
+    # Nothing in the pipeline reads it; it is here so a reader can confirm which dump a result came
+    # from without opening the database by hand.
     def meta(self) -> dict[str, str]:
         return {r["key"]: r["value"] for r in self._conn.execute("SELECT key, value FROM meta")}
 
-    def distinct_types(self) -> list[str]:
-        return [r[0] for r in self._conn.execute(
-            "SELECT DISTINCT type FROM issue WHERE type IS NOT NULL ORDER BY type")]
-
-    def distinct_statuses(self) -> list[str]:
-        return [r[0] for r in self._conn.execute(
-            "SELECT DISTINCT status FROM issue WHERE status IS NOT NULL ORDER BY status")]
+    # distinct_types() and distinct_statuses() lived here as schema-confirmation helpers. The
+    # vocabularies they were used to establish are now settled and recorded in CLAUDE.md's sampling
+    # criteria, and scripts/profile_seoss.py reports the same thing for every column rather than
+    # two, so they were dead in fact as well as unreferenced.
 
     # -- issues --
     @staticmethod
