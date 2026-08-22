@@ -29,9 +29,11 @@ case-study findings on a single project.
 - `src/pipeline/` prompt assembly and per-condition generation
 - `src/eval/` Layer 1 structural, Layer 2 file verifier, Layer 3 judge and comparisons, Layer 4 calibration
 - `src/analysis/stats.py` Wilcoxon, rank-biserial, Holm-Bonferroni, Cohen's kappa
-- `scripts/` experiment runner, judge runner, calibration build and scoring
+- `src/paths.py` default input and output locations, each overridable by a script flag
+- `src/utils/` JSON and JSONL helpers, order-preserving dedupe
+- `scripts/` experiment runner, judge runner, calibration build and scoring, aggregation, SEOSS profiler
 - `prompts/` decomposition and pairwise-judge templates
-- `config/config.yaml` central config, secrets in `.env`
+- `config/config.yaml` models, temperature, commit window and judge criteria; secrets in `.env`
 - `data/frozen/` the frozen twenty-requirement sample and other committed inputs
 - `results/` final run artefacts (see `results/README.md`)
 - `docs/` signed decision records for design choices taken during the study
@@ -46,8 +48,9 @@ pytest
 ```
 
 Reproduction additionally requires the SEOSS 33 Apache Pig SQLite dump and a local clone of
-`apache/pig`, neither of which is committed. Paths are set in `config/config.yaml`. Provenance and
-the three-leg verification of the clone are documented in [DATA_PROVENANCE.md](DATA_PROVENANCE.md).
+`apache/pig`, neither of which is committed. Their default locations are in `src/paths.py`, and every
+script takes a `--db` / `--repo` flag to override them. Provenance and the three-leg verification of
+the clone are documented in [DATA_PROVENANCE.md](DATA_PROVENANCE.md).
 
 ## Reproducing the reported run
 
@@ -57,10 +60,10 @@ generation, so any change to a template is visible in the output.
 
 ```bash
 # 1. Freeze the requirement sample (already committed under data/frozen/)
-python scripts/build_sample.py
+python scripts/freeze_requirements.py --check     # verifies it still reproduces; --force to rewrite
 
 # 2. Build the four context indexes, including the full codebase-summaries pass
-python scripts/build_indexes.py
+python scripts/build_index.py --confirm-summaries
 
 # 3. Generate 120 decompositions and compute Layers 1 and 2 per cell
 python scripts/run_experiment.py --run-id 20260814T033139Z
@@ -71,10 +74,18 @@ python scripts/run_judge.py --run-id 20260814T033139Z
 # 5. Layer 4: build the blinded calibration sheet, rate it by hand, then score it
 python scripts/build_calibration_set.py --run-id 20260814T033139Z
 python scripts/score_calibration.py --run-id 20260814T033139Z
+
+# 6. Regenerate every Chapter 4 table from the committed artefacts alone
+python scripts/aggregate_results.py --run-id 20260814T033139Z
 ```
 
 Steps 3 and 4 call paid model APIs and are not deterministic across providers or model versions.
-Steps 1, 2 and 5 are deterministic given the same inputs.
+Steps 1, 2 and 5 are deterministic given the same inputs. Step 6 needs neither the SEOSS dump nor
+the Pig clone: it reads only `results/`, so any reader with the repository can reproduce the
+reported numbers.
+
+Step 2 spends one LLM call per uncached Java file, 1088 on a cold cache, which is why
+`--confirm-summaries` is required rather than default.
 
 ## Data policy
 
