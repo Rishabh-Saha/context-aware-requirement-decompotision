@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+from src.utils.sequences import dedupe
+
 _JIRA_KEY = re.compile(r"[A-Z][A-Z0-9]+-\d+")
 _NUL = "\x00"
 
@@ -76,12 +78,11 @@ class LocalCommitIndex:
         candidates: list[LocalCommit] = list(self._by_subject.get(subj, []))
 
         if not candidates:                       # fallback: match by Jira key in the message
-            seen: set[str] = set()
-            for key in _JIRA_KEY.findall(message or ""):
-                for lc in self._by_key.get(key, []):
-                    if lc.sha not in seen:
-                        seen.add(lc.sha)
-                        candidates.append(lc)
+            candidates = dedupe(
+                (lc for key in _JIRA_KEY.findall(message or "")
+                 for lc in self._by_key.get(key, [])),
+                key=lambda lc: lc.sha,
+            )
         if not candidates:
             return []
 
@@ -99,10 +100,4 @@ class LocalCommitIndex:
             if dated:
                 candidates = dated
 
-        out: list[str] = []
-        seen_sha: set[str] = set()
-        for c in candidates:
-            if c.sha not in seen_sha:
-                seen_sha.add(c.sha)
-                out.append(c.sha)
-        return out
+        return dedupe(c.sha for c in candidates)

@@ -31,6 +31,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Iterable
 
+from src.utils.sequences import dedupe
+
 
 class FileStatus(str, Enum):
     REAL = "REAL"
@@ -108,11 +110,8 @@ def resolve_commit_window(repo_path: str | Path, around_ref: str, before: int = 
             ["rev-list", "--reverse", "--ancestry-path", f"{around_ref}..HEAD"],
         ).split()
         descendants = raw[:after]
-    # Anchor is included in ancestors[0]; dedupe while preserving order.
-    seen: dict[str, None] = {}
-    for sha in ancestors + descendants:
-        seen.setdefault(sha, None)
-    return list(seen)
+    # The anchor is already ancestors[0], so the two lists overlap by one.
+    return dedupe(ancestors + descendants)
 
 
 class FileVerifier:
@@ -144,10 +143,7 @@ class FileVerifier:
         refs: list[str] = []
         for a in anchors:
             refs.extend(resolve_commit_window(repo_path, a, before=before, after=after))
-        seen: dict[str, None] = {}
-        for r in refs:
-            seen.setdefault(r, None)
-        return cls(repo_path, list(seen) or list(anchors))
+        return cls(repo_path, dedupe(refs) or list(anchors))
 
     def _load_tree(self, ref: str) -> set[str]:
         out = _run_git(self.repo_path, ["ls-tree", "-r", "--name-only", ref])

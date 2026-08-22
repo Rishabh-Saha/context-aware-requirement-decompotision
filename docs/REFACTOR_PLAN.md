@@ -227,7 +227,7 @@ refuses to drift, and it does so by raising at `run_judge.py:219-220`.
 | 4 | `OVERALL` and `RATING_COLUMNS` | `build_calibration_set.py:60-61`, `score_calibration.py:47-48` | **the writer and the reader of the same CSV each define its columns independently** |
 | 5 | `_default_embed_fn` | `index.py:23`, `hybrid.py:50` | two copies |
 | 6 | Strip a ```json fence, same expression | `generate.py:29`, `judge.py:58` | two copies |
-| 7 | Order-preserving dedupe via `dict.setdefault` | `file_verifier.py:111-115`, `file_verifier.py:147-150`, `commit_resolver.py:102-107` | three copies, two in one file |
+| 7 | Order-preserving dedupe | `file_verifier.py:111-115`, `file_verifier.py:147-150`, `commit_resolver.py:79-84`, `commit_resolver.py:102-107` | **four** copies, two per file, spelled two different ways (dict+setdefault, set+append) |
 | 8 | "latest commit that touches code" | `seoss_loader.py:144` `anchor_commit_obj`, `sampling.py:43` `_acceptance_commit` | two implementations of one sampling rule, returning different types |
 | 9 | The archived cell filename `{issue_key}__{condition}.json` | built at `run_experiment.py:74`, parsed at `rendering.py:102` | **the writer and the reader of the run directory agree only by convention** |
 | 10 | `SRC_SUBPATH = "src/org/apache/pig"` | `build_index.py:52`, `run_experiment.py:56`, hardcoded at `sources.py:211` and `sources.py:230` | four copies |
@@ -438,7 +438,7 @@ Ordered by value per unit of risk. "Lines" is net removal, ignoring any new shar
 | 6 | Delete `distinct_types()` and `distinct_statuses()` only (see 2.1: `meta()` and `commit_for_issue()` stay, both documented in CODEBASE_GUIDE.md) | 1 | ~10 | **low** |
 | 7 | Collapse `aggregate_results`'s four one-line loaders and `table_4_5_layer4` into `main` | 1 | ~16 | **low** |
 | 8 | Move `append_jsonl`, `frozen_requirements` and the client factory into `src/utils/` and `src/llm/`; delete the five/two/two copies | 7 | ~70 | **medium** |
-| 9 | One order-preserving `dedupe()` in `src/utils/`, used by the three copy sites | 3 | ~10 | **low** |
+| 9 | ~~One order-preserving `dedupe()` in `src/utils/`~~ **DONE**, **four** copy sites not three | 3 | 14 | **low** |
 | 10 | ~~Share script defaults from one `src/paths.py`~~ **DONE**, 14 constants, 8 scripts plus 3 sites in `src/` | 11 | 30 | **low** |
 | 11 | Delete the dead guards: `run_experiment.py:177`, the `kappa is None` half at `score_calibration.py:158`, the `isinstance` at `:169`, the `dense["ids"]` falsy branch at `hybrid.py:95` | 3 | ~6 | **low** |
 | 12 | Split `run_experiment.main` into `parse_args`, `prepare_run` and `run_cell`, flattening depth 5 to 3 | 1 | ~0 net | **medium** |
