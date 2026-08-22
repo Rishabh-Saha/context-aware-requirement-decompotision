@@ -41,16 +41,14 @@ load_dotenv()   # the judge call needs the provider key
 
 import yaml  # noqa: E402
 
-from src.eval.comparisons import REFERENCE, build_ordered_comparisons, reconcile  # noqa: E402
+from src.eval.comparisons import build_ordered_comparisons, reconcile  # noqa: E402
 from src.eval.judge import CRITERIA, judge_pair, load_template  # noqa: E402
-from src.eval.rendering import (  # noqa: E402
-    load_decomposition,
-    render_decomposition,
-    render_reference,
-    requirement_text,
-    resolve_side,
-    scrub_artefact,
-)
+# resolve_side is the only renderer this script calls on purpose: it dispatches between a condition
+# and the reference sentinel, so both sides of every comparison go through one path rather than this
+# script deciding which renderer a side deserves. scrub_artefact is not called here; it is re-exported
+# because tests/test_run_judge.py asserts the scrubbing behaviour through this module, which is where
+# the blinding guarantee is claimed.
+from src.eval.rendering import requirement_text, resolve_side, scrub_artefact  # noqa: E402,F401
 from src.utils.io import read_jsonl, write_json  # noqa: E402
 
 DEFAULT_CONFIG = "config/config.yaml"

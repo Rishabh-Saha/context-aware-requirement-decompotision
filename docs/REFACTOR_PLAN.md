@@ -347,8 +347,21 @@ Not on the requested list, but it belongs in the same sweep.
 - `src/data/seoss_loader.py:109`: prints the SQL and params on every `issues()` call, including from
   inside the test suite.
 - Unused imports: `scripts/run_judge.py:44,46` imports `REFERENCE`, `load_decomposition`,
-  `render_decomposition`, `render_reference` and `scrub_artefact`, none of which it uses (it goes
-  through `resolve_side`). `scripts/profile_seoss.py:16` imports `textwrap` unused.
+  `render_decomposition`, `render_reference` and `scrub_artefact`, none of which appear in its body
+  (it goes through `resolve_side`). `scripts/profile_seoss.py:16` imports `textwrap` unused.
+
+  **Correction, found while executing item 2: four of those five are unused, not all five.**
+  `scrub_artefact` is reached as `run_judge.scrub_artefact` from `tests/test_run_judge.py:230,240`,
+  so removing it broke two tests. Static import analysis cannot see cross-module attribute access,
+  and this repo has a lot of it: tests reach `build_index.frozen_requirements`,
+  `build_index.sanity_summary_scope`, `run_experiment.{build_verifier, cell_paths, diagnostics_row,
+  existing_diagnostic_keys, frozen_requirements, source_file_references}` and
+  `run_judge.{CRITERIA, side_of}` the same way. `scrub_artefact` is now kept as an explicit
+  re-export with `F401` and a comment saying why.
+
+  This generalises past item 2. **Any proposal that removes or moves a script-level name must be
+  checked against that attribute-access list first**, not just against imports. It is the concrete
+  form of the risk noted for item 8, and it is why item 8 is rated medium.
 
 ## 3. Where the complexity is
 
@@ -382,7 +395,7 @@ Ordered by value per unit of risk. "Lines" is net removal, ignoring any new shar
 | # | Change | Files | Lines | Risk |
 | --- | --- | --- | --- | --- |
 | 1 | ~~Delete `src/utils/logging.py` and `src/eval/base.py`; move `src/profiler.py` to `scripts/profile_seoss.py`~~ **DONE** | 3 | 24 | **low** |
-| 2 | Remove the five unused imports in `run_judge.py` and one in `profile_seoss.py` | 2 | 6 | **low** |
+| 2 | ~~Remove the **four** unused imports in `run_judge.py` (not five, see 2.11) and one in `profile_seoss.py`~~ **DONE** | 2 | 5 | **low** |
 | 3 | Remove the four `print(chunks[:5])` calls and the SQL print in the loader | 2 | 5 | **low** |
 | 4 | Single-source `RATING_COLUMNS`/`OVERALL` (move to `src/eval/calibration.py`, import in both scripts) | 3 | 4 | **low** |
 | 5 | Single-source the cell filename: one `cell_stem(issue_key, condition)` used by both the writer and `rendering.load_decomposition` | 3 | 4 | **low** |
