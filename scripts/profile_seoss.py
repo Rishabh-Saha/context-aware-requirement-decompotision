@@ -1,8 +1,19 @@
 """Read-only profile of every table and column in a SEOSS SQLite db.
 For each column: fill rate, distinct count, and a few example values (truncated).
 For low-cardinality columns, shows the full value distribution (great for finding
-things like the exact `type`, `status`, `resolution`, `priority` vocabularies)."""
-import sqlite3, sys, textwrap
+things like the exact `type`, `status`, `resolution`, `priority` vocabularies).
+
+This is the tool the sampling filters in src/data/sampling.py were chosen from, which is why it is
+kept rather than deleted: it is how a reader confirms that `resolution = 'Fixed'` and the 30-char
+description floor describe this dump and not a guess.
+
+Usage:
+    python scripts/profile_seoss.py                          # the default Pig dump
+    python scripts/profile_seoss.py path/to/other.sqlite
+
+Run from the repo root.
+"""
+import sqlite3, sys
 
 db = sys.argv[1] if len(sys.argv) > 1 else "data/seoss33/pig.sqlite"
 con = sqlite3.connect(db); con.row_factory = sqlite3.Row
