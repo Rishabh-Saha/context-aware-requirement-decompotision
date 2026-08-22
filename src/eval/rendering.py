@@ -92,6 +92,18 @@ def requirement_text(requirement: dict) -> str:
     return f"{requirement['title']}\n\n{requirement['description']}".strip()
 
 
+def cell_stem(issue_key: str, condition: str) -> str:
+    """The filename stem for one cell of the generation grid.
+
+    run_experiment.py writes `<stem>.json` and `<stem>.prompt.txt`; load_decomposition below reads
+    the first of those back, and the Layer 4 sheet reaches it through resolve_side. All of them come
+    through here so the archive layout is stated in one place. A writer and a reader that agreed only
+    by convention would diverge silently, and the symptom would be a FileNotFoundError for a file
+    sitting in the directory under a slightly different name.
+    """
+    return f"{issue_key}__{condition}"
+
+
 def load_decomposition(run_dir: str | Path, issue_key: str, condition: str) -> dict:
     """The archived decomposition for one cell of the generation grid.
 
@@ -99,7 +111,7 @@ def load_decomposition(run_dir: str | Path, issue_key: str, condition: str) -> d
     requirement contributing to some comparisons and not others, which is far harder to notice
     later than a recorded failure.
     """
-    path = Path(run_dir) / f"{issue_key}__{condition}.json"
+    path = Path(run_dir) / f"{cell_stem(issue_key, condition)}.json"
     if not path.exists():
         raise FileNotFoundError(f"no archived decomposition at {path}")
     return json.loads(path.read_text())["decomposition"]

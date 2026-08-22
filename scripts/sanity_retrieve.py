@@ -32,13 +32,12 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv()   # the dense channel embeds the query, so OPENAI_API_KEY has to be present
 
 from src.conditions import Condition, active_contexts, ALL_CONTEXT_TYPES  # noqa: E402
+from src.data.frozen import load_frozen_requirements  # noqa: E402
 from src.data.seoss_loader import SeossLoader  # noqa: E402
 from src.retrieval.hybrid import PER_TYPE, retrieve_by_type, self_exclusion_ids  # noqa: E402
 from src.retrieval.index import ContextIndex  # noqa: E402
 
-DEFAULT_DB = "data/seoss33/pig.sqlite"
-DEFAULT_REPO = "data/repos/pig"
-DEFAULT_FROZEN = "data/frozen/requirements.json"
+from src.paths import DEFAULT_DB, DEFAULT_FROZEN, DEFAULT_REPO  # noqa: E402
 
 CONDITIONS = [
     Condition.FULL_RAG,
@@ -47,11 +46,6 @@ CONDITIONS = [
     Condition.NO_CODING_CONVENTIONS,
     Condition.NO_CODEBASE_SUMMARIES,
 ]
-
-
-def load_requirements(path: str) -> list[dict]:
-    data = json.loads(Path(path).read_text())
-    return [r for r in data if isinstance(r, dict) and r.get("issue_key")]
 
 
 def main() -> int:
@@ -63,7 +57,7 @@ def main() -> int:
     p.add_argument("--per-type", type=int, default=PER_TYPE, help="budget per context type (Option B)")
     args = p.parse_args()
 
-    reqs = load_requirements(args.frozen)
+    reqs = load_frozen_requirements(args.frozen)
     req = next((r for r in reqs if r["issue_key"] == args.issue), None) if args.issue else reqs[0]
     if req is None:
         print(f"issue {args.issue} not in frozen set")

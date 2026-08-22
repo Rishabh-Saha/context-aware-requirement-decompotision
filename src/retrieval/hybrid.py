@@ -92,7 +92,7 @@ def hybrid_retrieve(
     embed_fn = embed_fn or _default_embed_fn
     query_embedding = embed_fn([query])[0]
     dense = index.dense_query(query_embedding, active, top_k, exclude_issue_id=exclude_issue_id)
-    dense_ids = dense["ids"][0] if dense["ids"] else []
+    dense_ids = dense["ids"][0]
     lexical_ids = lexical_rank(query, candidates)
 
     fused = reciprocal_rank_fusion([dense_ids, lexical_ids], k=k)

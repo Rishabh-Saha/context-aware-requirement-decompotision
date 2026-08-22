@@ -39,14 +39,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.eval.judge import CRITERIA  # noqa: E402
+from src.data.frozen import load_frozen_requirements  # noqa: E402
+from src.eval.calibration import OVERALL, RATING_COLUMNS  # noqa: E402
 from src.eval.rendering import requirement_text, resolve_side  # noqa: E402
 from src.utils.io import read_jsonl, write_json  # noqa: E402
 
-DEFAULT_FROZEN = "data/frozen/requirements.json"
-DEFAULT_RUNS_DIR = "data/runs"
-CALIBRATION_SUBDIR = "calibration"
-JUDGE_SUBDIR = "judge"
+from src.paths import (  # noqa: E402
+    CALIBRATION_SUBDIR,
+    DEFAULT_FROZEN,
+    DEFAULT_RUNS_DIR,
+    JUDGE_SUBDIR,
+)
 
 DEFAULT_SEED = 20260814
 DEFAULT_N = 20
@@ -55,10 +58,10 @@ DEFAULT_N = 20
 # from n rather than hard-coded, so a different --n still splits in the design's proportions.
 DESIGN_WEIGHTS = {"SQ1": 4, "SQ2": 1, "SQ3": 2}
 
-# The extra rating column beyond the five criteria. The reconciled overall winner is what Layer 3
-# contributes to the analysis and what the kappa gate governs, so it has to be rateable.
-OVERALL = "overall"
-RATING_COLUMNS = (*CRITERIA, OVERALL)
+# OVERALL and RATING_COLUMNS come from src.eval.calibration, which score_calibration.py reads too,
+# so the writer and the reader of this CSV cannot disagree about its columns. The overall column is
+# the extra one beyond the five criteria: the reconciled winner is what Layer 3 contributes to the
+# analysis and what the kappa gate governs, so it has to be rateable.
 
 
 def stratum_targets(n: int, weights: dict[str, int]) -> dict[str, int]:
@@ -267,8 +270,7 @@ def main() -> int:
         )
 
     judgments = list(read_jsonl(judgments_path))
-    requirements = {r["issue_key"]: r for r in json.loads(Path(args.frozen).read_text())
-                    if isinstance(r, dict) and r.get("issue_key")}
+    requirements = {r["issue_key"]: r for r in load_frozen_requirements(args.frozen)}
 
     rng = random.Random(args.seed)
     selected, provenance = select_pairs(judgments, args.n, rng)

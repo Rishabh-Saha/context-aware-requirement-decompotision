@@ -29,6 +29,7 @@ from xml.etree import ElementTree as ET
 from src.conditions import ContextType
 from src.data.seoss_loader import SeossLoader
 from src.llm.base import LLMClient
+from src.paths import SRC_SUBPATH
 from src.retrieval.text_clean import strip_jira_markup
 
 # Forrest xdocs files that are pure navigation/config, not documentation prose (confirmed: they
@@ -82,7 +83,6 @@ def past_tickets_chunks(loader: SeossLoader) -> list[Chunk]:
             metadata={"issue_id": issue.issue_id},
         ))
     print(f"Built {len(chunks)} past-ticket chunks from {len(issues)} issues")
-    print(chunks[:5])
     return chunks
 
 
@@ -109,7 +109,6 @@ def design_document_chunks(docs_dir: str | Path) -> list[Chunk]:
             metadata={"source": path.name},
         ))
     print(f"Built {len(chunks)} design-document chunks")
-    print(chunks[:5])
     return chunks
 
 
@@ -136,7 +135,6 @@ def coding_convention_chunks(repo_path: str | Path) -> list[Chunk]:
             metadata={"source": str(path.relative_to(repo_path))},
         ))
     print(f"Built {len(chunks)} coding-convention chunks")
-    print(chunks[:5])
     return chunks
 
 
@@ -208,7 +206,7 @@ def pending_summary_files(
 ) -> list[Path]:
     """Files (relative to the main source root) that don't have a cached summary yet. Pure
     lookup, no LLM calls - use this to show a count before deciding whether to spend API calls."""
-    src_root = Path(repo_path) / "src" / "org" / "apache" / "pig"
+    src_root = Path(repo_path) / SRC_SUBPATH
     cache_dir = Path(cache_dir)
     candidates = file_paths if file_paths is not None else sorted(src_root.rglob("*.java"))
     return [p for p in candidates if _read_cache(cache_dir, src_root, p) is None]
@@ -227,7 +225,7 @@ def codebase_summary_chunks(
     pending_summary_files() first to see the count and decide."""
     repo_path = Path(repo_path)
     cache_dir = Path(cache_dir)
-    src_root = repo_path / "src" / "org" / "apache" / "pig"
+    src_root = repo_path / SRC_SUBPATH
     file_paths = file_paths if file_paths is not None else sorted(src_root.rglob("*.java"))
 
     pending = [p for p in file_paths if _read_cache(cache_dir, src_root, p) is None]
@@ -257,5 +255,4 @@ def codebase_summary_chunks(
             metadata={"file_path": rel},
         ))
     print(f"Built {len(chunks)} codebase-summary chunks")
-    print(chunks[:5])
     return chunks

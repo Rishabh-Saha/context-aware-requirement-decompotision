@@ -15,6 +15,8 @@ from src.data.seoss_loader import SeossLoader
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import build_index  # noqa: E402
 
+from src.data.frozen import load_frozen_requirements  # noqa: E402
+
 SCHEMA = """
 CREATE TABLE issue (issue_id text NOT NULL UNIQUE, type text, summary text, description text, status text, resolution text, created_date text, resolved_date text);
 CREATE TABLE code_change (commit_hash text NOT NULL, file_path text, old_file_path text, change_type text, is_deleted integer, sum_added_lines integer, sum_removed_lines integer);
@@ -79,4 +81,4 @@ def test_frozen_requirements_drops_the_meta_header(tmp_path: Path):
     path = tmp_path / "requirements.json"
     path.write_text(json.dumps([{"_meta": {"n_frozen": 2}},
                                 {"issue_key": "PIG-1"}, {"issue_key": "PIG-2"}]))
-    assert [r["issue_key"] for r in build_index.frozen_requirements(path)] == ["PIG-1", "PIG-2"]
+    assert [r["issue_key"] for r in load_frozen_requirements(path)] == ["PIG-1", "PIG-2"]

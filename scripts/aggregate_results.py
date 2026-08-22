@@ -28,7 +28,7 @@ from src.analysis.stats import holm_bonferroni, wilcoxon_signed_rank  # noqa: E4
 from src.conditions import Condition, LEAVE_ONE_OUT  # noqa: E402
 from src.utils.io import read_jsonl, write_json  # noqa: E402
 
-DEFAULT_RESULTS_DIR = "results"
+from src.paths import DEFAULT_RESULTS_DIR  # noqa: E402
 
 LAYER1_FIELDS = [
     "num_user_stories",
@@ -39,22 +39,6 @@ LAYER1_FIELDS = [
     "dangling_dependency_count",
 ]
 LAYER2_FIELDS = ["real_rate", "ambiguous_rate", "hallucinated_rate"]
-
-
-def load_diagnostics(results_dir: Path) -> list[dict]:
-    return list(read_jsonl(results_dir / "diagnostics.jsonl"))
-
-
-def load_judgments(results_dir: Path) -> list[dict]:
-    return list(read_jsonl(results_dir / "judgments.jsonl"))
-
-
-def load_judgments_raw(results_dir: Path) -> list[dict]:
-    return list(read_jsonl(results_dir / "judgments_raw.jsonl"))
-
-
-def load_calibration(results_dir: Path) -> dict:
-    return json.loads((results_dir / "calibration_result.json").read_text())
 
 
 def _paired_metric(
@@ -200,16 +184,6 @@ def positional_inconsistency_rate(judgments_raw: list[dict]) -> dict:
     }
 
 
-def table_4_5_layer4(calibration: dict) -> dict:
-    return {
-        "gate_metric": calibration["gate_metric"],
-        "threshold": calibration["threshold"],
-        "overall": calibration["overall"],
-        "pooled_criteria": calibration["pooled_criteria"],
-        "per_criterion": calibration["per_criterion"],
-    }
-
-
 def print_table(title: str, data) -> None:
     print(f"\n=== {title} ===")
     print(json.dumps(data, indent=2))
@@ -222,10 +196,10 @@ def main() -> None:
     args = parser.parse_args()
 
     results_dir = Path(args.results_dir)
-    diagnostics = load_diagnostics(results_dir)
-    judgments = load_judgments(results_dir)
-    judgments_raw = load_judgments_raw(results_dir)
-    calibration = load_calibration(results_dir)
+    diagnostics = list(read_jsonl(results_dir / "diagnostics.jsonl"))
+    judgments = list(read_jsonl(results_dir / "judgments.jsonl"))
+    judgments_raw = list(read_jsonl(results_dir / "judgments_raw.jsonl"))
+    calibration = json.loads((results_dir / "calibration_result.json").read_text())
 
     aggregates = {
         "run_id": args.run_id,
@@ -233,7 +207,12 @@ def main() -> None:
         "table_4_2_layer2_verdicts": table_4_2_layer2(diagnostics),
         "table_4_3_sq1_hallucination_rate": table_4_3_sq1_hallucination(diagnostics),
         "table_4_4_layer3_pairwise": table_4_4_layer3(judgments),
-        "table_4_5_layer4_calibration": table_4_5_layer4(calibration),
+        # Layer 4 is reported as scored, not recomputed: score_calibration.py owns the gate, and
+        # the fields carried through are exactly the ones Table 4.5 prints.
+        "table_4_5_layer4_calibration": {
+            field: calibration[field] for field in
+            ("gate_metric", "threshold", "overall", "pooled_criteria", "per_criterion")
+        },
         "positional_inconsistency_4_6": positional_inconsistency_rate(judgments_raw),
     }
 

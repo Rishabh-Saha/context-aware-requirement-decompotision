@@ -41,31 +41,25 @@ load_dotenv()   # the judge call needs the provider key
 
 import yaml  # noqa: E402
 
-from src.eval.comparisons import REFERENCE, build_ordered_comparisons, reconcile  # noqa: E402
+from src.data.frozen import load_frozen_requirements  # noqa: E402
+from src.eval.comparisons import build_ordered_comparisons, reconcile  # noqa: E402
 from src.eval.judge import CRITERIA, judge_pair, load_template  # noqa: E402
-from src.eval.rendering import (  # noqa: E402
-    load_decomposition,
-    render_decomposition,
-    render_reference,
-    requirement_text,
-    resolve_side,
-    scrub_artefact,
+# resolve_side is the only renderer this script calls on purpose: it dispatches between a condition
+# and the reference sentinel, so both sides of every comparison go through one path rather than this
+# script deciding which renderer a side deserves. scrub_artefact is not called here; it is re-exported
+# because tests/test_run_judge.py asserts the scrubbing behaviour through this module, which is where
+# the blinding guarantee is claimed.
+from src.eval.rendering import requirement_text, resolve_side, scrub_artefact  # noqa: E402,F401
+from src.llm.factory import make_client  # noqa: E402
+from src.utils.io import append_jsonl, read_jsonl, write_json  # noqa: E402
+
+from src.paths import (  # noqa: E402
+    DEFAULT_CONFIG,
+    DEFAULT_FROZEN,
+    DEFAULT_PROMPT,
+    DEFAULT_RUNS_DIR,
+    JUDGE_SUBDIR,
 )
-from src.utils.io import read_jsonl, write_json  # noqa: E402
-
-DEFAULT_CONFIG = "config/config.yaml"
-DEFAULT_FROZEN = "data/frozen/requirements.json"
-DEFAULT_RUNS_DIR = "data/runs"
-DEFAULT_PROMPT = "prompts/judge_pairwise.txt"
-JUDGE_SUBDIR = "judge"
-
-
-# ---------------------------------------------------------------- loading the generation run
-
-def frozen_requirements(path: str | Path) -> list[dict]:
-    """The frozen requirements, without the _meta provenance entry the freeze script prepends."""
-    records = json.loads(Path(path).read_text())
-    return [r for r in records if isinstance(r, dict) and r.get("issue_key")]
 
 
 # ---------------------------------------------------------------- judging and reconciling
@@ -81,18 +75,13 @@ def side_of(verdict_choice: str, a_side: str, b_side: str) -> str:
 
 
 def make_judge(judge_cfg: dict):
-    """Judge client from config. Provider and temperature are passed explicitly and recorded in the
-    manifest, since the judge configuration is part of what the Layer 3 results mean."""
-    provider = judge_cfg["provider"].lower()
-    model = judge_cfg["model"]
-    temperature = float(judge_cfg["temperature"])
-    if provider == "anthropic":
-        from src.llm.anthropic_client import AnthropicClient
-        return AnthropicClient(model=model, temperature=temperature)
-    if provider == "openai":
-        from src.llm.openai_client import OpenAIClient
-        return OpenAIClient(model=model, temperature=temperature)
-    raise ValueError(f"unsupported judge provider: {provider!r}")
+    """The judge client for this pass.
+
+    A named module-level function rather than an alias for make_client, because the judge tests
+    replace it wholesale so no real provider call is ever made. Collapsing it into a direct call
+    would remove that seam.
+    """
+    return make_client(judge_cfg, role="judge")
 
 
 def assert_different_family(judge_cfg: dict, generator: dict) -> None:
@@ -118,14 +107,6 @@ def existing_judged_keys(path: Path) -> set[tuple[str, str, str]]:
         return set()
     return {(row["issue_key"], row["left"], row["right"]) for row in read_jsonl(path)
             if "issue_key" in row and "left" in row and "right" in row}
-
-
-def append_jsonl(path: Path, row: dict) -> None:
-    """Append one row immediately. A judge pass is long and paid-for, so an interruption must keep
-    every verdict it already has."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 def prompt_fingerprint(template: str) -> str:
@@ -235,7 +216,7 @@ def main() -> int:
     template = load_template(args.prompt)
     prompt_sha = prompt_fingerprint(template)
 
-    requirements = frozen_requirements(args.frozen)
+    requirements = load_frozen_requirements(args.frozen)
     if args.limit is not None:
         requirements = requirements[:args.limit]
     # Only requirements the generation run actually covered can be judged.

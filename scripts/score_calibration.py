@@ -37,15 +37,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.eval.calibration import KAPPA_THRESHOLD, calibrate  # noqa: E402
+from src.eval.calibration import (  # noqa: E402
+    KAPPA_THRESHOLD,
+    OVERALL,
+    RATING_COLUMNS,
+    calibrate,
+)
 from src.eval.judge import CRITERIA  # noqa: E402
 from src.utils.io import write_json  # noqa: E402
 
-DEFAULT_RUNS_DIR = "data/runs"
-CALIBRATION_SUBDIR = "calibration"
+from src.paths import CALIBRATION_SUBDIR, DEFAULT_RUNS_DIR  # noqa: E402
 
-OVERALL = "overall"
-RATING_COLUMNS = (*CRITERIA, OVERALL)
+# OVERALL and RATING_COLUMNS come from src.eval.calibration, the same place
+# build_calibration_set.py reads them, so this reader cannot drift from that writer.
 
 BLANK_MARKERS = {"", "-", "na", "n/a", "skip"}
 
@@ -154,8 +158,8 @@ def kappa_block(researcher: list[str], judge: list[str]) -> dict:
                 "note": "fewer than two usable pairs, kappa is not defined"}
 
     result = calibrate(researcher, judge)
-    kappa = result.get("kappa")
-    if kappa is None or (isinstance(kappa, float) and math.isnan(kappa)):
+    kappa = result["kappa"]
+    if math.isnan(kappa):
         agreement = sum(a == b for a, b in zip(researcher, judge)) / n
         return {
             "kappa": None, "n": n, "usable": False,
@@ -165,10 +169,8 @@ def kappa_block(researcher: list[str], judge: list[str]) -> dict:
                      "chance agreement is 1. Raw agreement is reported instead."),
         }
 
-    ci = result.get("ci95")
-    if isinstance(ci, (list, tuple)):
-        ci = [None if (isinstance(v, float) and math.isnan(v)) else v for v in ci]
-        result["ci95"] = ci
+    # cohens_kappa always attaches ci95 once n >= 2, which the guard above has established.
+    result["ci95"] = [None if math.isnan(v) else v for v in result["ci95"]]
     result["usable"] = True
     result["raw_agreement"] = round(sum(a == b for a, b in zip(researcher, judge)) / n, 4)
     return result
