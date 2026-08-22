@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.conditions import ContextType  # noqa: E402
+from src.data.frozen import load_frozen_requirements  # noqa: E402
 from src.data.seoss_loader import SeossLoader  # noqa: E402
 from src.retrieval.index import ContextIndex  # noqa: E402
 from src.retrieval.sources import (  # noqa: E402
@@ -56,11 +57,6 @@ from src.paths import (  # noqa: E402
 # The sanity set is the first three frozen requirements, read from the frozen file rather than
 # hardcoded so it can never drift from the actual Phase 1 deliverable.
 SANITY_N = 3
-
-
-def frozen_requirements(path: str | Path) -> list[dict]:
-    records = json.loads(Path(path).read_text())
-    return [r for r in records if "_meta" not in r]
 
 
 def sanity_summary_scope(loader: SeossLoader, repo: Path, requirements: list[dict]) -> list[Path]:
@@ -173,7 +169,7 @@ def main() -> int:
         print("\n== codebase_summaries ==")
         scope: list[Path] | None = None
         if args.sanity:
-            requirements = frozen_requirements(args.frozen)[:SANITY_N]
+            requirements = load_frozen_requirements(args.frozen)[:SANITY_N]
             keys = ", ".join(r["issue_key"] for r in requirements)
             print(f"--sanity: scoping codebase_summaries to the resolution commits of {keys}")
             scope = sanity_summary_scope(loader, repo, requirements)

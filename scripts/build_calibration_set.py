@@ -39,6 +39,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.data.frozen import load_frozen_requirements  # noqa: E402
 from src.eval.calibration import OVERALL, RATING_COLUMNS  # noqa: E402
 from src.eval.rendering import requirement_text, resolve_side  # noqa: E402
 from src.utils.io import read_jsonl, write_json  # noqa: E402
@@ -269,8 +270,7 @@ def main() -> int:
         )
 
     judgments = list(read_jsonl(judgments_path))
-    requirements = {r["issue_key"]: r for r in json.loads(Path(args.frozen).read_text())
-                    if isinstance(r, dict) and r.get("issue_key")}
+    requirements = {r["issue_key"]: r for r in load_frozen_requirements(args.frozen)}
 
     rng = random.Random(args.seed)
     selected, provenance = select_pairs(judgments, args.n, rng)

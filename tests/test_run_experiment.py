@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from src.conditions import Condition
+from src.data.frozen import load_frozen_requirements
 from src.eval.file_verifier import FileVerifier
 from src.pipeline.generate import run_condition
 from src.schema import Decomposition
@@ -121,7 +122,7 @@ def test_frozen_requirements_drops_meta(tmp_path: Path):
         {"_meta": {"target_n": 20}},
         {"issue_key": "PIG-704", "title": "t", "description": "d"},
     ]))
-    reqs = run_experiment.frozen_requirements(path)
+    reqs = load_frozen_requirements(path)
     assert [r["issue_key"] for r in reqs] == ["PIG-704"]
 
 

@@ -37,10 +37,12 @@ load_dotenv()   # retrieval embeds the query and generation calls the provider
 import yaml  # noqa: E402
 
 from src.conditions import Condition  # noqa: E402
+from src.data.frozen import load_frozen_requirements  # noqa: E402
 from src.data.seoss_loader import SeossLoader  # noqa: E402
 from src.eval.file_verifier import FileVerifier  # noqa: E402
 from src.eval.rendering import cell_stem  # noqa: E402
 from src.eval.structural import structural_metrics  # noqa: E402
+from src.llm.factory import make_client  # noqa: E402
 from src.pipeline.generate import build_condition_prompt, run_condition  # noqa: E402
 from src.retrieval.hybrid import PER_TYPE  # noqa: E402
 from src.retrieval.index import ContextIndex  # noqa: E402
@@ -62,12 +64,6 @@ from src.paths import (  # noqa: E402
 CONDITIONS: tuple[Condition, ...] = tuple(Condition)
 
 
-def frozen_requirements(path: str | Path) -> list[dict]:
-    """The frozen requirements, without the _meta provenance entry the freeze script prepends."""
-    records = json.loads(Path(path).read_text())
-    return [r for r in records if isinstance(r, dict) and r.get("issue_key")]
-
-
 def new_run_id() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
@@ -81,18 +77,13 @@ def cell_paths(run_dir: Path, issue_key: str, condition: Condition) -> tuple[Pat
 
 
 def make_llm(llm_cfg: dict):
-    """Generator client from config. Temperature is passed explicitly rather than left to the SDK
-    default, since the proposal fixes it across all six conditions and reports it with the results."""
-    provider = llm_cfg["provider"].lower()
-    model = llm_cfg["model"]
-    temperature = float(llm_cfg["temperature"])
-    if provider == "openai":
-        from src.llm.openai_client import OpenAIClient
-        return OpenAIClient(model=model, temperature=temperature)
-    if provider == "anthropic":
-        from src.llm.anthropic_client import AnthropicClient
-        return AnthropicClient(model=model, temperature=temperature)
-    raise ValueError(f"unsupported generator provider: {provider!r}")
+    """The generator client for this run.
+
+    A named module-level function rather than an alias for make_client, because the resume test
+    replaces it wholesale to keep a real provider client from ever being constructed. Collapsing it
+    into a direct call would remove that seam and make the test build an OpenAI client.
+    """
+    return make_client(llm_cfg, role="generator")
 
 
 def existing_diagnostic_keys(path: Path) -> set[tuple[str, str]]:
@@ -222,7 +213,7 @@ def main() -> int:
     diagnostics_path = run_dir / "diagnostics.jsonl"
     failures_path = run_dir / "failures.jsonl"
 
-    requirements = frozen_requirements(args.frozen)
+    requirements = load_frozen_requirements(args.frozen)
     if args.limit is not None:
         requirements = requirements[:args.limit]
     total_cells = len(requirements) * len(CONDITIONS)

@@ -499,11 +499,16 @@ disappears, so `test_run_experiment.py:259` and `test_run_judge.py:146` would fa
 `AttributeError`. The corrected split:
 
 - **8a**, genuinely no test edits: `append_jsonl` only. Two identical copies, reached by nothing. **DONE**, moved to `src/utils/io.py` next to `write_jsonl`.
-- **8b**, needs test edits: `frozen_requirements` (5 copies; `test_run_experiment.py`,
-  `test_build_index.py`) and the client factory (2 copies; `test_run_experiment.py`,
-  `test_run_judge.py`). For the factory the fix is not a re-export but patching the new location,
-  or having the script keep a thin `make_llm` that delegates, which is what the tests are really
-  asserting against anyway.
+- **8b**, needs test edits: `frozen_requirements` (5 copies) and the client factory (2 copies).
+  **DONE.** `load_frozen_requirements` in `src/data/frozen.py`, `make_client` in
+  `src/llm/factory.py`. The scripts keep `make_llm`/`make_judge` as one-line delegates, which
+  preserves the monkeypatch seam and cost zero edits to the two tests that use it. Only two test
+  lines changed, both for `frozen_requirements`.
+
+  The seam is the delegate **name existing**, not its body running. `monkeypatch.setattr` replaces
+  the function, so breaking the delegate body changes nothing; removing the name fails 10 tests with
+  9 errors on `AttributeError: module has no attribute make_judge`. Any later item that inlines
+  these delegates breaks both resume tests.
 
 The same hazard applies to `run_experiment.ContextIndex`, `SeossLoader` and `build_condition_prompt`:
 all three are imported names patched in place, so any item that changes how `run_experiment.py`
