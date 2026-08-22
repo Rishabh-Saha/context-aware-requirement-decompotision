@@ -19,6 +19,19 @@ def write_jsonl(path: str | Path, rows: Iterable[dict]) -> None:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+def append_jsonl(path: str | Path, row: dict) -> None:
+    """Append one row immediately, rather than batching every row until the end.
+
+    Both long passes use this for the same reason. A generation run and a judge run are paid for by
+    the call, and either can be interrupted, so a row is written the moment it is computed and an
+    interrupted run keeps everything it already has. write_jsonl above truncates and is for output
+    written in one go; this one is for output accumulated across a resumable pass.
+    """
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
 def read_jsonl(path: str | Path) -> Iterator[dict]:
     with open(path, encoding="utf-8") as f:
         for line in f:

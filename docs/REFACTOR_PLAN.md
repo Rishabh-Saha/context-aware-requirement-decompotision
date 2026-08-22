@@ -498,7 +498,7 @@ either into `src/llm/` makes the script bind the name via `from ... import`, and
 disappears, so `test_run_experiment.py:259` and `test_run_judge.py:146` would fail with
 `AttributeError`. The corrected split:
 
-- **8a**, genuinely no test edits: `append_jsonl` only. Two identical copies, reached by nothing.
+- **8a**, genuinely no test edits: `append_jsonl` only. Two identical copies, reached by nothing. **DONE**, moved to `src/utils/io.py` next to `write_jsonl`.
 - **8b**, needs test edits: `frozen_requirements` (5 copies; `test_run_experiment.py`,
   `test_build_index.py`) and the client factory (2 copies; `test_run_experiment.py`,
   `test_run_judge.py`). For the factory the fix is not a re-export but patching the new location,

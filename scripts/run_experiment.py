@@ -45,7 +45,7 @@ from src.pipeline.generate import build_condition_prompt, run_condition  # noqa:
 from src.retrieval.hybrid import PER_TYPE  # noqa: E402
 from src.retrieval.index import ContextIndex  # noqa: E402
 from src.schema import Decomposition  # noqa: E402
-from src.utils.io import read_jsonl, write_json  # noqa: E402
+from src.utils.io import append_jsonl, read_jsonl, write_json  # noqa: E402
 
 from src.paths import (  # noqa: E402
     DEFAULT_COLLECTION,
@@ -145,14 +145,6 @@ def diagnostics_row(
         "layer1": structural_metrics(decomp),
         "layer2": layer2,
     }
-
-
-def append_jsonl(path: Path, row: dict) -> None:
-    """Append one row immediately rather than batching at the end, so an interrupted run keeps the
-    scores it already computed."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 def check_summary_coverage(index: ContextIndex, repo: Path, limit: int | None, allow: bool) -> bool:

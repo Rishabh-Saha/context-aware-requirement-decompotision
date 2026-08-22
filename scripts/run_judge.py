@@ -49,7 +49,7 @@ from src.eval.judge import CRITERIA, judge_pair, load_template  # noqa: E402
 # because tests/test_run_judge.py asserts the scrubbing behaviour through this module, which is where
 # the blinding guarantee is claimed.
 from src.eval.rendering import requirement_text, resolve_side, scrub_artefact  # noqa: E402,F401
-from src.utils.io import read_jsonl, write_json  # noqa: E402
+from src.utils.io import append_jsonl, read_jsonl, write_json  # noqa: E402
 
 from src.paths import (  # noqa: E402
     DEFAULT_CONFIG,
@@ -118,14 +118,6 @@ def existing_judged_keys(path: Path) -> set[tuple[str, str, str]]:
         return set()
     return {(row["issue_key"], row["left"], row["right"]) for row in read_jsonl(path)
             if "issue_key" in row and "left" in row and "right" in row}
-
-
-def append_jsonl(path: Path, row: dict) -> None:
-    """Append one row immediately. A judge pass is long and paid-for, so an interruption must keep
-    every verdict it already has."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 def prompt_fingerprint(template: str) -> str:
