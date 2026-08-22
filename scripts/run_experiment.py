@@ -47,14 +47,16 @@ from src.retrieval.index import ContextIndex  # noqa: E402
 from src.schema import Decomposition  # noqa: E402
 from src.utils.io import read_jsonl, write_json  # noqa: E402
 
-DEFAULT_CONFIG = "config/config.yaml"
-DEFAULT_DB = "data/seoss33/pig.sqlite"
-DEFAULT_REPO = "data/repos/pig"
-DEFAULT_FROZEN = "data/frozen/requirements.json"
-DEFAULT_RUNS_DIR = "data/runs"
-DEFAULT_PERSIST = "./data/chroma"
-DEFAULT_COLLECTION = "seoss_pig"
-SRC_SUBPATH = "src/org/apache/pig"
+from src.paths import (  # noqa: E402
+    DEFAULT_COLLECTION,
+    DEFAULT_CONFIG,
+    DEFAULT_DB,
+    DEFAULT_FROZEN,
+    DEFAULT_PERSIST,
+    DEFAULT_REPO,
+    DEFAULT_RUNS_DIR,
+    SRC_SUBPATH,
+)
 
 # Fixed condition order, so the printed progress and the on-disk row order are stable between runs.
 CONDITIONS: tuple[Condition, ...] = tuple(Condition)

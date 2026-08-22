@@ -46,8 +46,7 @@ from src.eval.calibration import (  # noqa: E402
 from src.eval.judge import CRITERIA  # noqa: E402
 from src.utils.io import write_json  # noqa: E402
 
-DEFAULT_RUNS_DIR = "data/runs"
-CALIBRATION_SUBDIR = "calibration"
+from src.paths import CALIBRATION_SUBDIR, DEFAULT_RUNS_DIR  # noqa: E402
 
 # OVERALL and RATING_COLUMNS come from src.eval.calibration, the same place
 # build_calibration_set.py reads them, so this reader cannot drift from that writer.

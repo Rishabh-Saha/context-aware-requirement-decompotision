@@ -32,9 +32,8 @@ from src.data.sampling import TARGET_N, sample_requirements  # noqa: E402
 from src.data.seoss_loader import SeossLoader  # noqa: E402
 from src.utils.io import write_json  # noqa: E402
 
-DEFAULT_DB = "data/seoss33/pig.sqlite"
-DEFAULT_REPO = "data/repos/pig"
-DEFAULT_OUT = "data/frozen/requirements.json"
+from src.paths import DEFAULT_DB, DEFAULT_REPO  # noqa: E402
+from src.paths import DEFAULT_FROZEN as DEFAULT_OUT  # noqa: E402  (this script writes it)
 
 
 def build(db: str, repo: str, target_n: int) -> list[dict]:

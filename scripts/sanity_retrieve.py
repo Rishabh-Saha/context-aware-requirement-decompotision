@@ -36,9 +36,7 @@ from src.data.seoss_loader import SeossLoader  # noqa: E402
 from src.retrieval.hybrid import PER_TYPE, retrieve_by_type, self_exclusion_ids  # noqa: E402
 from src.retrieval.index import ContextIndex  # noqa: E402
 
-DEFAULT_DB = "data/seoss33/pig.sqlite"
-DEFAULT_REPO = "data/repos/pig"
-DEFAULT_FROZEN = "data/frozen/requirements.json"
+from src.paths import DEFAULT_DB, DEFAULT_FROZEN, DEFAULT_REPO  # noqa: E402
 
 CONDITIONS = [
     Condition.FULL_RAG,

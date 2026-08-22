@@ -28,7 +28,7 @@ from src.analysis.stats import holm_bonferroni, wilcoxon_signed_rank  # noqa: E4
 from src.conditions import Condition, LEAVE_ONE_OUT  # noqa: E402
 from src.utils.io import read_jsonl, write_json  # noqa: E402
 
-DEFAULT_RESULTS_DIR = "results"
+from src.paths import DEFAULT_RESULTS_DIR  # noqa: E402
 
 LAYER1_FIELDS = [
     "num_user_stories",

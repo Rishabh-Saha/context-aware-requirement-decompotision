@@ -368,8 +368,28 @@ Not on the requested list, but it belongs in the same sweep.
   | `run_judge` | `CRITERIA`, `main`, `scrub_artefact`, `side_of` | `test_run_judge.py` |
   | `score_calibration` | `CRITERIA`, `KAPPA_THRESHOLD`, `main` | `test_score_calibration.py` |
 
-  Regenerate with an AST walk that resolves `import X as Y`, not with grep. Nineteen script-level
-  names are load-bearing for the suite without appearing in any import statement.
+  **Third correction, the sweep widened before item 10.** The alias-aware list above was still
+  short, and the count of 19 was itself a miscount of 20. `monkeypatch.setattr(run_judge,
+  "make_judge", stub)` passes the attribute name as a string constant, so it is not an
+  `ast.Attribute` node and no dotted-access walk will ever see it. Five names are reached only that
+  way, and they are the most consequential five in the file, because each one is an **imported name
+  being replaced inside the script's own namespace**.
+
+  Authoritative list, 24 names. Star imports: none. `getattr`/`hasattr` by string: none.
+  `importlib`, `globals()`, `eval`, `exec`: none.
+
+  | Script | Reached by dotted access | Reached by string-name patching |
+  | --- | --- | --- |
+  | `build_calibration_set` | `DESIGN_WEIGHTS`, `main`, `stratum_targets` | none |
+  | `build_index` | `frozen_requirements`, `sanity_summary_scope` | none |
+  | `run_experiment` | `build_verifier`, `cell_paths`, `diagnostics_row`, `existing_diagnostic_keys`, `frozen_requirements`, `main`, `source_file_references` | `ContextIndex`, `SeossLoader`, `build_condition_prompt`, `make_llm` |
+  | `run_judge` | `CRITERIA`, `main`, `scrub_artefact`, `side_of` | `make_judge` |
+  | `score_calibration` | `CRITERIA`, `KAPPA_THRESHOLD`, `main` | none |
+
+  Any sweep run in future must cover four vectors, not one: dotted access, `setattr`/`monkeypatch.
+  setattr` with a string name, star imports, and dynamic lookup. Three successive sweeps
+  under-counted this, so treat any number produced here as a floor until a proposed move is actually
+  attempted and the suite run.
 
   **That re-export is a temporary measure, not a pattern to copy.** No further re-exports are to be
   added outside item 8 step 1, where they exist only to keep the suite green between the move and the
@@ -419,7 +439,7 @@ Ordered by value per unit of risk. "Lines" is net removal, ignoring any new shar
 | 7 | Collapse `aggregate_results`'s four one-line loaders and `table_4_5_layer4` into `main` | 1 | ~16 | **low** |
 | 8 | Move `append_jsonl`, `frozen_requirements` and the client factory into `src/utils/` and `src/llm/`; delete the five/two/two copies | 7 | ~70 | **medium** |
 | 9 | One order-preserving `dedupe()` in `src/utils/`, used by the three copy sites | 3 | ~10 | **low** |
-| 10 | Share script defaults (`DEFAULT_DB`, `DEFAULT_REPO`, `DEFAULT_FROZEN`, `DEFAULT_RUNS_DIR`, subdir names, `SRC_SUBPATH`) from one `src/paths.py` | 7 | ~30 | **low** |
+| 10 | ~~Share script defaults from one `src/paths.py`~~ **DONE**, 14 constants, 8 scripts plus 3 sites in `src/` | 11 | 30 | **low** |
 | 11 | Delete the dead guards: `run_experiment.py:177`, the `kappa is None` half at `score_calibration.py:158`, the `isinstance` at `:169`, the `dense["ids"]` falsy branch at `hybrid.py:95` | 3 | ~6 | **low** |
 | 12 | Split `run_experiment.main` into `parse_args`, `prepare_run` and `run_cell`, flattening depth 5 to 3 | 1 | ~0 net | **medium** |
 | 13 | Same split for `run_judge.main` | 1 | ~0 net | **medium** |
@@ -469,6 +489,26 @@ Three ways forward, in preference order:
 3. Leave item 4 undone and accept the duplication.
 
 Needs a decision before this item can proceed.
+
+**Item 8's split into 8a and 8b was wrong, corrected by the widened sweep.** The earlier claim that
+`append_jsonl` and the client factory are reached by no test, and so could move without any test
+edit, holds only for `append_jsonl`. `run_experiment.make_llm` and `run_judge.make_judge` are both
+replaced by `monkeypatch.setattr` with a string name, which no dotted-access sweep reports. Moving
+either into `src/llm/` makes the script bind the name via `from ... import`, and the patch target
+disappears, so `test_run_experiment.py:259` and `test_run_judge.py:146` would fail with
+`AttributeError`. The corrected split:
+
+- **8a**, genuinely no test edits: `append_jsonl` only. Two identical copies, reached by nothing.
+- **8b**, needs test edits: `frozen_requirements` (5 copies; `test_run_experiment.py`,
+  `test_build_index.py`) and the client factory (2 copies; `test_run_experiment.py`,
+  `test_run_judge.py`). For the factory the fix is not a re-export but patching the new location,
+  or having the script keep a thin `make_llm` that delegates, which is what the tests are really
+  asserting against anyway.
+
+The same hazard applies to `run_experiment.ContextIndex`, `SeossLoader` and `build_condition_prompt`:
+all three are imported names patched in place, so any item that changes how `run_experiment.py`
+imports them breaks the resume test. Item 12's split of `main` must leave those three bindings at
+module level.
 
 **Item 8, medium not low.** Four test files import script modules by path and reference script-level
 helpers directly (`test_build_index.py` calls `run script's frozen_requirements`). Moving those

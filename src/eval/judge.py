@@ -16,9 +16,11 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from src.paths import DEFAULT_PROMPT
+
 CRITERIA = ("actionability", "completeness", "project_specificity", "granularity", "clarity")
 
-DEFAULT_PROMPT_PATH = Path("prompts/judge_pairwise.txt")
+DEFAULT_PROMPT_PATH = Path(DEFAULT_PROMPT)
 
 # The only two things a verdict may name. Kept explicit so a judge that answers "tie", "both" or a
 # condition name fails loudly instead of quietly becoming a win for whichever side sorts first.

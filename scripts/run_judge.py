@@ -51,11 +51,13 @@ from src.eval.judge import CRITERIA, judge_pair, load_template  # noqa: E402
 from src.eval.rendering import requirement_text, resolve_side, scrub_artefact  # noqa: E402,F401
 from src.utils.io import read_jsonl, write_json  # noqa: E402
 
-DEFAULT_CONFIG = "config/config.yaml"
-DEFAULT_FROZEN = "data/frozen/requirements.json"
-DEFAULT_RUNS_DIR = "data/runs"
-DEFAULT_PROMPT = "prompts/judge_pairwise.txt"
-JUDGE_SUBDIR = "judge"
+from src.paths import (  # noqa: E402
+    DEFAULT_CONFIG,
+    DEFAULT_FROZEN,
+    DEFAULT_PROMPT,
+    DEFAULT_RUNS_DIR,
+    JUDGE_SUBDIR,
+)
 
 
 # ---------------------------------------------------------------- loading the generation run

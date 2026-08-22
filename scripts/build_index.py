@@ -42,14 +42,16 @@ from src.retrieval.sources import (  # noqa: E402
 from dotenv import load_dotenv
 load_dotenv()
 
-DEFAULT_DB = "data/seoss33/pig.sqlite"
-DEFAULT_REPO = "data/repos/pig"
-DEFAULT_FROZEN = "data/frozen/requirements.json"
-DEFAULT_CACHE = "data/summaries"
-DEFAULT_PERSIST = "./data/chroma"
-DEFAULT_COLLECTION = "seoss_pig"
-DOCS_SUBPATH = "src/docs/src/documentation/content/xdocs"
-SRC_SUBPATH = "src/org/apache/pig"
+from src.paths import (  # noqa: E402
+    DEFAULT_CACHE,
+    DEFAULT_COLLECTION,
+    DEFAULT_DB,
+    DEFAULT_FROZEN,
+    DEFAULT_PERSIST,
+    DEFAULT_REPO,
+    DOCS_SUBPATH,
+    SRC_SUBPATH,
+)
 
 # The sanity set is the first three frozen requirements, read from the frozen file rather than
 # hardcoded so it can never drift from the actual Phase 1 deliverable.

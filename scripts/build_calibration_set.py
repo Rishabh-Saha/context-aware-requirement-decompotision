@@ -43,10 +43,12 @@ from src.eval.calibration import OVERALL, RATING_COLUMNS  # noqa: E402
 from src.eval.rendering import requirement_text, resolve_side  # noqa: E402
 from src.utils.io import read_jsonl, write_json  # noqa: E402
 
-DEFAULT_FROZEN = "data/frozen/requirements.json"
-DEFAULT_RUNS_DIR = "data/runs"
-CALIBRATION_SUBDIR = "calibration"
-JUDGE_SUBDIR = "judge"
+from src.paths import (  # noqa: E402
+    CALIBRATION_SUBDIR,
+    DEFAULT_FROZEN,
+    DEFAULT_RUNS_DIR,
+    JUDGE_SUBDIR,
+)
 
 DEFAULT_SEED = 20260814
 DEFAULT_N = 20
