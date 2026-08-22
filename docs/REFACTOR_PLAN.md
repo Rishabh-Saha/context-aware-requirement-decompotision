@@ -440,7 +440,7 @@ Ordered by value per unit of risk. "Lines" is net removal, ignoring any new shar
 | 8 | Move `append_jsonl`, `frozen_requirements` and the client factory into `src/utils/` and `src/llm/`; delete the five/two/two copies | 7 | ~70 | **medium** |
 | 9 | ~~One order-preserving `dedupe()` in `src/utils/`~~ **DONE**, **four** copy sites not three | 3 | 14 | **low** |
 | 10 | ~~Share script defaults from one `src/paths.py`~~ **DONE**, 14 constants, 8 scripts plus 3 sites in `src/` | 11 | 30 | **low** |
-| 11 | Delete the dead guards: `run_experiment.py:177`, the `kappa is None` half at `score_calibration.py:158`, the `isinstance` at `:169`, the `dense["ids"]` falsy branch at `hybrid.py:95` | 3 | ~6 | **low** |
+| 11 | ~~Delete the four dead guards~~ **DONE**, each proved unreachable by probe before removal | 3 | 6 | **low** |
 | 12 | Split `run_experiment.main` into `parse_args`, `prepare_run` and `run_cell`, flattening depth 5 to 3 | 1 | ~0 net | **medium** |
 | 13 | Same split for `run_judge.main` | 1 | ~0 net | **medium** |
 | 14 | Reconcile `config/config.yaml` with the code: either read the eleven duplicated keys, or delete them and leave a comment pointing at the module that owns each value | 6+ | ~15 yaml | **medium** |

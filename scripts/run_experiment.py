@@ -178,8 +178,9 @@ def check_summary_coverage(index: ContextIndex, repo: Path, limit: int | None, a
         print(f"codebase_summaries coverage: {covered}/{total}. --allow-incomplete-summaries was "
               "passed, so the run proceeds and every artefact is stamped summaries_incomplete.")
         return True
-    index.assert_codebase_summaries_complete(total_files=total_main_source)   # raises
-    return True   # unreachable, kept so every path returns a bool
+    # Coverage is short and neither escape hatch applies, so this always raises and the function
+    # does not return on this path.
+    index.assert_codebase_summaries_complete(total_files=total_main_source)
 
 
 def build_verifier(repo: Path, requirement: dict, before: int, after: int) -> FileVerifier | None:

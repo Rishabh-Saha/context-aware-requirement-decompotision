@@ -158,8 +158,8 @@ def kappa_block(researcher: list[str], judge: list[str]) -> dict:
                 "note": "fewer than two usable pairs, kappa is not defined"}
 
     result = calibrate(researcher, judge)
-    kappa = result.get("kappa")
-    if kappa is None or (isinstance(kappa, float) and math.isnan(kappa)):
+    kappa = result["kappa"]
+    if math.isnan(kappa):
         agreement = sum(a == b for a, b in zip(researcher, judge)) / n
         return {
             "kappa": None, "n": n, "usable": False,
@@ -169,10 +169,8 @@ def kappa_block(researcher: list[str], judge: list[str]) -> dict:
                      "chance agreement is 1. Raw agreement is reported instead."),
         }
 
-    ci = result.get("ci95")
-    if isinstance(ci, (list, tuple)):
-        ci = [None if (isinstance(v, float) and math.isnan(v)) else v for v in ci]
-        result["ci95"] = ci
+    # cohens_kappa always attaches ci95 once n >= 2, which the guard above has established.
+    result["ci95"] = [None if math.isnan(v) else v for v in result["ci95"]]
     result["usable"] = True
     result["raw_agreement"] = round(sum(a == b for a, b in zip(researcher, judge)) / n, 4)
     return result
