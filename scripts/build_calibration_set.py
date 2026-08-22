@@ -39,7 +39,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.eval.judge import CRITERIA  # noqa: E402
+from src.eval.calibration import OVERALL, RATING_COLUMNS  # noqa: E402
 from src.eval.rendering import requirement_text, resolve_side  # noqa: E402
 from src.utils.io import read_jsonl, write_json  # noqa: E402
 
@@ -55,10 +55,10 @@ DEFAULT_N = 20
 # from n rather than hard-coded, so a different --n still splits in the design's proportions.
 DESIGN_WEIGHTS = {"SQ1": 4, "SQ2": 1, "SQ3": 2}
 
-# The extra rating column beyond the five criteria. The reconciled overall winner is what Layer 3
-# contributes to the analysis and what the kappa gate governs, so it has to be rateable.
-OVERALL = "overall"
-RATING_COLUMNS = (*CRITERIA, OVERALL)
+# OVERALL and RATING_COLUMNS come from src.eval.calibration, which score_calibration.py reads too,
+# so the writer and the reader of this CSV cannot disagree about its columns. The overall column is
+# the extra one beyond the five criteria: the reconciled winner is what Layer 3 contributes to the
+# analysis and what the kappa gate governs, so it has to be rateable.
 
 
 def stratum_targets(n: int, weights: dict[str, int]) -> dict[str, int]:

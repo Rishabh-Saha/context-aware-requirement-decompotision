@@ -37,15 +37,20 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.eval.calibration import KAPPA_THRESHOLD, calibrate  # noqa: E402
+from src.eval.calibration import (  # noqa: E402
+    KAPPA_THRESHOLD,
+    OVERALL,
+    RATING_COLUMNS,
+    calibrate,
+)
 from src.eval.judge import CRITERIA  # noqa: E402
 from src.utils.io import write_json  # noqa: E402
 
 DEFAULT_RUNS_DIR = "data/runs"
 CALIBRATION_SUBDIR = "calibration"
 
-OVERALL = "overall"
-RATING_COLUMNS = (*CRITERIA, OVERALL)
+# OVERALL and RATING_COLUMNS come from src.eval.calibration, the same place
+# build_calibration_set.py reads them, so this reader cannot drift from that writer.
 
 BLANK_MARKERS = {"", "-", "na", "n/a", "skip"}
 

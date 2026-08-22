@@ -13,7 +13,9 @@ from pathlib import Path
 import pytest
 
 from src.conditions import Condition
+from src.eval.calibration import RATING_COLUMNS
 from src.eval.comparisons import REFERENCE, comparison_types
+from src.eval.judge import CRITERIA
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import build_calibration_set as bcs  # noqa: E402
@@ -47,7 +49,7 @@ def judgment(issue: str, left: str, right: str, sq: str, inconsistent: bool = Fa
         "sub_question": sq,
         "winner": winner,
         "positional_inconsistent": inconsistent,
-        "per_criterion_winner": {c: winner for c in bcs.CRITERIA},
+        "per_criterion_winner": {c: winner for c in CRITERIA},
         "per_criterion_inconsistent": [],
     }
 
@@ -170,7 +172,7 @@ def test_seed_is_recorded_in_the_manifest(workspace, monkeypatch):
     manifest = json.loads((cal_dir(workspace) / "manifest.json").read_text())
     assert manifest["seed"] == 4242
     assert manifest["strata"]["SQ1"]["target"] == 11
-    assert manifest["rating_columns"] == [*bcs.CRITERIA, "overall"]
+    assert manifest["rating_columns"] == list(RATING_COLUMNS)
 
 
 # ---------------------------------------------------------------- blinding
@@ -257,6 +259,6 @@ def test_ratings_csv_has_a_row_per_pair_and_a_column_per_criterion(workspace, mo
     assert build(monkeypatch) == 0
     lines = (cal_dir(workspace) / "calibration_ratings.csv").read_text().strip().splitlines()
 
-    assert lines[0] == "pair_id," + ",".join([*bcs.CRITERIA, "overall"])
+    assert lines[0] == "pair_id," + ",".join(RATING_COLUMNS)
     assert len(lines) == 21          # header plus twenty pairs
     assert all(line.endswith(",,,,,,") for line in lines[1:]), "cells start empty"

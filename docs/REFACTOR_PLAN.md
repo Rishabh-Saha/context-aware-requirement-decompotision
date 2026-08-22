@@ -352,12 +352,24 @@ Not on the requested list, but it belongs in the same sweep.
 
   **Correction, found while executing item 2: four of those five are unused, not all five.**
   `scrub_artefact` is reached as `run_judge.scrub_artefact` from `tests/test_run_judge.py:230,240`,
-  so removing it broke two tests. Static import analysis cannot see cross-module attribute access,
-  and this repo has a lot of it: tests reach `build_index.frozen_requirements`,
-  `build_index.sanity_summary_scope`, `run_experiment.{build_verifier, cell_paths, diagnostics_row,
-  existing_diagnostic_keys, frozen_requirements, source_file_references}` and
-  `run_judge.{CRITERIA, side_of}` the same way. `scrub_artefact` is now kept as an explicit
-  re-export with `F401` and a comment saying why.
+  so removing it broke two tests. Static import analysis cannot see cross-module attribute access.
+  `scrub_artefact` is now kept as an explicit re-export with `F401` and a comment saying why.
+
+  **Second correction, found while executing item 4.** The list published here after item 2 was
+  itself incomplete, because it was grepped for literal module names and
+  `tests/test_calibration_set.py:19` does `import build_calibration_set as bcs`. The list below is
+  AST-derived and alias-aware, and is the authoritative one.
+
+  | Script | Name reached by attribute | From |
+  | --- | --- | --- |
+  | `build_calibration_set` | `CRITERIA`, `DESIGN_WEIGHTS`, `main`, `stratum_targets` | `test_calibration_set.py` |
+  | `build_index` | `frozen_requirements`, `sanity_summary_scope` | `test_build_index.py` |
+  | `run_experiment` | `build_verifier`, `cell_paths`, `diagnostics_row`, `existing_diagnostic_keys`, `frozen_requirements`, `main`, `source_file_references` | `test_run_experiment.py` |
+  | `run_judge` | `CRITERIA`, `main`, `scrub_artefact`, `side_of` | `test_run_judge.py` |
+  | `score_calibration` | `CRITERIA`, `KAPPA_THRESHOLD`, `main` | `test_score_calibration.py` |
+
+  Regenerate with an AST walk that resolves `import X as Y`, not with grep. Nineteen script-level
+  names are load-bearing for the suite without appearing in any import statement.
 
   **That re-export is a temporary measure, not a pattern to copy.** No further re-exports are to be
   added outside item 8 step 1, where they exist only to keep the suite green between the move and the
@@ -401,7 +413,7 @@ Ordered by value per unit of risk. "Lines" is net removal, ignoring any new shar
 | 1 | ~~Delete `src/utils/logging.py` and `src/eval/base.py`; move `src/profiler.py` to `scripts/profile_seoss.py`~~ **DONE** | 3 | 24 | **low** |
 | 2 | ~~Remove the **four** unused imports in `run_judge.py` (not five, see 2.11) and one in `profile_seoss.py`~~ **DONE** | 2 | 5 | **low** |
 | 3 | ~~Remove the four `print(chunks[:5])` calls and the SQL print in the loader~~ **DONE** | 2 | 5 | **low** |
-| 4 | Single-source `RATING_COLUMNS`/`OVERALL` (move to `src/eval/calibration.py`, import in both scripts) | 3 | 4 | **low** |
+| 4 | ~~Single-source `RATING_COLUMNS`/`OVERALL` into `src/eval/calibration.py`, plus the test edit~~ **DONE** | 4 | 6 | **medium** |
 | 5 | Single-source the cell filename: one `cell_stem(issue_key, condition)` used by both the writer and `rendering.load_decomposition` | 3 | 4 | **low** |
 | 6 | Delete `distinct_types()` and `distinct_statuses()` only (see 2.1: `meta()` and `commit_for_issue()` stay, both documented in CODEBASE_GUIDE.md) | 1 | ~10 | **low** |
 | 7 | Collapse `aggregate_results`'s four one-line loaders and `table_4_5_layer4` into `main` | 1 | ~16 | **low** |
@@ -418,6 +430,45 @@ Ordered by value per unit of risk. "Lines" is net removal, ignoring any new shar
 | 18 | Trim the docstrings named in 2.8 | 5 | ~25 | **high** |
 
 Notes on the ones where the risk rating is doing real work.
+
+**Item 4 is blocked, and was mis-rated low.** Attempted and reverted. Moving `RATING_COLUMNS` and
+`OVERALL` into `src/eval/calibration.py` works on the `score_calibration.py` side, which keeps
+`CRITERIA` for its own loops. It fails on the `build_calibration_set.py` side: that script's *only*
+use of `CRITERIA` is to build `RATING_COLUMNS`, so the move makes the import dead, but
+`tests/test_calibration_set.py` reaches `bcs.CRITERIA` at lines 50, 173 and 260. Removing it raises
+`AttributeError` in 12 tests.
+
+Worth noting what those test lines actually do: `:173` asserts
+`manifest["rating_columns"] == [*bcs.CRITERIA, "overall"]` and `:260` asserts the CSV header the same
+way. The test therefore holds a *third* independent construction of the column list, rebuilt from
+`CRITERIA` and a literal `"overall"`, rather than asserting against `RATING_COLUMNS`. So the drift
+risk this item exists to remove is currently spread across three places, not two.
+
+**Resolved by option 1 below.** Before editing, the assertion was confirmed load-bearing by mutation:
+setting `RATING_COLUMNS = ("wrong_column", OVERALL)` failed three tests in `test_calibration_set.py`
+with explicit column diffs. After the change, both directions were re-checked by mutation and both
+are still caught, though by different tests than before:
+
+| Mutation | Caught by |
+| --- | --- |
+| wrong `RATING_COLUMNS` at the shared definition | `test_score_calibration.py`, 4 tests (the reader stops parsing real criterion columns) |
+| writer stops using `RATING_COLUMNS` for the CSV header | `test_calibration_set.py`, 1 test |
+
+Coverage did not fall, it moved to the reader side, which is the better place for it: the writer is
+now checked for *using* the shared definition, and the definition itself is checked by the reader
+that has to parse real data with it.
+
+Three ways forward, in preference order:
+
+1. Move the constants to `src/eval/calibration.py` and update `test_calibration_set.py` to import
+   `RATING_COLUMNS` from there, replacing `[*bcs.CRITERIA, "overall"]` with it. This removes all
+   three copies and makes the test assert against the shared definition, which is stronger than what
+   it asserts today. Costs a three-line test edit.
+2. Same move, but keep `CRITERIA` in `build_calibration_set.py` as an `F401` re-export. Cheapest, and
+   explicitly ruled out: re-exports are reserved for item 8 step 1.
+3. Leave item 4 undone and accept the duplication.
+
+Needs a decision before this item can proceed.
 
 **Item 8, medium not low.** Four test files import script modules by path and reference script-level
 helpers directly (`test_build_index.py` calls `run script's frozen_requirements`). Moving those
