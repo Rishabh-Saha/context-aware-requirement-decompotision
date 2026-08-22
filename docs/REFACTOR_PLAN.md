@@ -414,7 +414,7 @@ Ordered by value per unit of risk. "Lines" is net removal, ignoring any new shar
 | 2 | ~~Remove the **four** unused imports in `run_judge.py` (not five, see 2.11) and one in `profile_seoss.py`~~ **DONE** | 2 | 5 | **low** |
 | 3 | ~~Remove the four `print(chunks[:5])` calls and the SQL print in the loader~~ **DONE** | 2 | 5 | **low** |
 | 4 | ~~Single-source `RATING_COLUMNS`/`OVERALL` into `src/eval/calibration.py`, plus the test edit~~ **DONE** | 4 | 6 | **medium** |
-| 5 | Single-source the cell filename: one `cell_stem(issue_key, condition)` used by both the writer and `rendering.load_decomposition` | 3 | 4 | **low** |
+| 5 | ~~Single-source the cell filename: one `cell_stem(issue_key, condition)` used by both the writer and `rendering.load_decomposition`~~ **DONE**, verified against all 120 archived cells | 2 | 4 | **low** |
 | 6 | Delete `distinct_types()` and `distinct_statuses()` only (see 2.1: `meta()` and `commit_for_issue()` stay, both documented in CODEBASE_GUIDE.md) | 1 | ~10 | **low** |
 | 7 | Collapse `aggregate_results`'s four one-line loaders and `table_4_5_layer4` into `main` | 1 | ~16 | **low** |
 | 8 | Move `append_jsonl`, `frozen_requirements` and the client factory into `src/utils/` and `src/llm/`; delete the five/two/two copies | 7 | ~70 | **medium** |

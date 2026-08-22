@@ -39,6 +39,7 @@ import yaml  # noqa: E402
 from src.conditions import Condition  # noqa: E402
 from src.data.seoss_loader import SeossLoader  # noqa: E402
 from src.eval.file_verifier import FileVerifier  # noqa: E402
+from src.eval.rendering import cell_stem  # noqa: E402
 from src.eval.structural import structural_metrics  # noqa: E402
 from src.pipeline.generate import build_condition_prompt, run_condition  # noqa: E402
 from src.retrieval.hybrid import PER_TYPE  # noqa: E402
@@ -70,8 +71,10 @@ def new_run_id() -> str:
 
 
 def cell_paths(run_dir: Path, issue_key: str, condition: Condition) -> tuple[Path, Path]:
-    """(decomposition path, prompt path) for one cell of the 20 x 6 grid."""
-    stem = f"{issue_key}__{condition.value}"
+    """(decomposition path, prompt path) for one cell of the 20 x 6 grid. The stem comes from
+    src.eval.rendering, which is also where the judge and the Layer 4 sheet read these files back
+    from, so this writer and those readers cannot disagree about the archive layout."""
+    stem = cell_stem(issue_key, condition.value)
     return run_dir / f"{stem}.json", run_dir / f"{stem}.prompt.txt"
 
 
