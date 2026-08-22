@@ -359,6 +359,10 @@ Not on the requested list, but it belongs in the same sweep.
   `run_judge.{CRITERIA, side_of}` the same way. `scrub_artefact` is now kept as an explicit
   re-export with `F401` and a comment saying why.
 
+  **That re-export is a temporary measure, not a pattern to copy.** No further re-exports are to be
+  added outside item 8 step 1, where they exist only to keep the suite green between the move and the
+  test update, and are deleted in step 2.
+
   This generalises past item 2. **Any proposal that removes or moves a script-level name must be
   checked against that attribute-access list first**, not just against imports. It is the concrete
   form of the risk noted for item 8, and it is why item 8 is rated medium.
@@ -396,7 +400,7 @@ Ordered by value per unit of risk. "Lines" is net removal, ignoring any new shar
 | --- | --- | --- | --- | --- |
 | 1 | ~~Delete `src/utils/logging.py` and `src/eval/base.py`; move `src/profiler.py` to `scripts/profile_seoss.py`~~ **DONE** | 3 | 24 | **low** |
 | 2 | ~~Remove the **four** unused imports in `run_judge.py` (not five, see 2.11) and one in `profile_seoss.py`~~ **DONE** | 2 | 5 | **low** |
-| 3 | Remove the four `print(chunks[:5])` calls and the SQL print in the loader | 2 | 5 | **low** |
+| 3 | ~~Remove the four `print(chunks[:5])` calls and the SQL print in the loader~~ **DONE** | 2 | 5 | **low** |
 | 4 | Single-source `RATING_COLUMNS`/`OVERALL` (move to `src/eval/calibration.py`, import in both scripts) | 3 | 4 | **low** |
 | 5 | Single-source the cell filename: one `cell_stem(issue_key, condition)` used by both the writer and `rendering.load_decomposition` | 3 | 4 | **low** |
 | 6 | Delete `distinct_types()` and `distinct_statuses()` only (see 2.1: `meta()` and `commit_for_issue()` stay, both documented in CODEBASE_GUIDE.md) | 1 | ~10 | **low** |
